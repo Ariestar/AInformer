@@ -1,0 +1,7 @@
+[rss."duplicate.source"]
+name = "Source A"
+feed_url = "https://example.com/feed-a.xml"
+
+[api."duplicate.source"]
+name = "Source B"
+url = "https://example.com/api/posts"

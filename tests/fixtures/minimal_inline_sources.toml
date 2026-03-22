@@ -1,0 +1,9 @@
+[rss."demo.rss"]
+feed_url = "https://example.com/feed.xml"
+article_fetch_enabled = false
+tags = ["demo", "rss"]
+
+[api."demo.api"]
+name = "Demo API"
+url = "https://example.com/api/posts"
+items_path = "$"

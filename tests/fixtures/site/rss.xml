@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Config Driven RSS</title>
+    <item>
+      <guid>rss-story-1</guid>
+      <title>Config Driven RSS Story</title>
+      <link>/article.html</link>
+      <pubDate>Thu, 20 Mar 2026 08:00:00 +0000</pubDate>
+      <author>rss@example.com (RSS Bot)</author>
+      <category>rss</category>
+      <description>RSS item excerpt.</description>
+    </item>
+  </channel>
+</rss>
+

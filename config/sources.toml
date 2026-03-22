@@ -1,0 +1,125 @@
+# Sources are grouped by acquisition method.
+#
+# Use one named table per source:
+# - [rss."source.id"]
+# - [api."source.id"]
+# - [scrape."source.id"]
+# - [fixture."source.id"]
+#
+# Minimal RSS example:
+# [rss."hackernews.best"]
+# name = "Hacker News Best"
+# tags = ["community", "news"]
+# feed_url = "https://hnrss.org/best"
+# article_fetch_enabled = false
+#
+# Self-hosted RSSHub base override:
+# AINFORMER_RSSHUB_BASE_URL=http://127.0.0.1:1200
+
+[api."huggingface.papers"]
+name = "Hugging Face Papers"
+tags = ["papers", "research"]
+url = "https://huggingface.co/api/daily_papers"
+items_path = "$"
+external_id_field = "paper.id"
+title_field = "title"
+url_template = "https://huggingface.co/papers/{paper.id}"
+canonical_url_template = "https://huggingface.co/papers/{paper.id}"
+published_at_field = "publishedAt"
+authors_field = "paper.authors"
+tags_field = "paper.ai_keywords"
+excerpt_field = "summary"
+content_text_field = "summary"
+
+[rss."arxiv.ai"]
+name = "arXiv AI"
+tags = ["papers", "research", "arxiv", "ai"]
+feed_url = "https://export.arxiv.org/api/query?search_query=cat:cs.AI&start=0&max_results=50&sortBy=submittedDate&sortOrder=descending"
+article_fetch_enabled = false
+
+[rss."arxiv.ml"]
+name = "arXiv ML"
+tags = ["papers", "research", "arxiv", "ml"]
+feed_url = "https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=50&sortBy=submittedDate&sortOrder=descending"
+article_fetch_enabled = false
+
+[rss."arxiv.nlp"]
+name = "arXiv NLP"
+tags = ["papers", "research", "arxiv", "nlp"]
+feed_url = "https://export.arxiv.org/api/query?search_query=cat:cs.CL&start=0&max_results=50&sortBy=submittedDate&sortOrder=descending"
+article_fetch_enabled = false
+
+[rss."arxiv.cv"]
+name = "arXiv CV"
+tags = ["papers", "research", "arxiv", "cv"]
+feed_url = "https://export.arxiv.org/api/query?search_query=cat:cs.CV&start=0&max_results=50&sortBy=submittedDate&sortOrder=descending"
+article_fetch_enabled = false
+
+[rss."openai.blog"]
+name = "OpenAI Articles"
+tags = ["company", "blog"]
+feed_url = "https://openai.com/news/rss.xml"
+
+[rss."openai.cookbook"]
+name = "OpenAI Cookbook"
+tags = ["company", "cookbook", "docs"]
+feed_url = "https://github.com/openai/openai-cookbook/commits/main.atom"
+article_fetch_enabled = false
+
+[rss."openai.research"]
+name = "OpenAI Research"
+tags = ["company", "research"]
+feed_url = "rsshub://openai/research"
+article_fetch_enabled = false
+
+[rss."anthropic.blog"]
+name = "Anthropic Articles"
+tags = ["company", "blog"]
+feed_url = "rsshub://anthropic/news"
+article_fetch_enabled = false
+
+[rss."google.gemini_blog"]
+name = "Google DeepMind"
+tags = ["company", "blog", "deepmind"]
+feed_url = "https://blog.google/technology/google-deepmind/rss/"
+
+[rss."qwen.blog"]
+name = "Qwen Blog"
+tags = ["company", "blog", "cn"]
+feed_url = "https://qwenlm.github.io/blog/index.xml"
+
+[rss."deepseek.news"]
+name = "DeepSeek News"
+tags = ["company", "news", "cn"]
+feed_url = "rsshub://deepseek/news"
+article_fetch_enabled = false
+
+[rss."deeplearning.batch"]
+name = "DeepLearning.AI The Batch"
+tags = ["newsletter", "ai"]
+feed_url = "rsshub://deeplearning/the-batch"
+article_fetch_enabled = false
+
+[rss."ollama.blog"]
+name = "Ollama Blog"
+tags = ["company", "blog"]
+feed_url = "rsshub://ollama/blog"
+article_fetch_enabled = false
+
+[rss."ollama.library"]
+name = "Ollama Library"
+tags = ["company", "models"]
+feed_url = "rsshub://ollama/library"
+article_fetch_enabled = false
+
+[rss."juya.ai_daily"]
+name = "Juya AI Daily"
+tags = ["newsletter", "ai", "daily"]
+feed_url = "https://imjuya.github.io/juya-ai-daily/rss.xml"
+article_fetch_enabled = false
+
+[rss."hackernews.best"]
+name = "Hacker News Best"
+tags = ["community", "news"]
+feed_url = "https://hnrss.org/best"
+article_fetch_enabled = false

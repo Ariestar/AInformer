@@ -1,0 +1,4 @@
+[rss."bad.source"]
+name = "Bad Source"
+selected_method = "api"
+feed_url = "https://example.com/feed.xml"

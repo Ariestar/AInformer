@@ -1,0 +1,16 @@
+[
+  {
+    "title": "Root Array API Story",
+    "publishedAt": "2026-03-20T11:00:00+00:00",
+    "summary": "Root array API item excerpt.",
+    "paper": {
+      "id": "2603.02510",
+      "authors": [
+        {"name": "Liu Yang"},
+        {"name": "Zeyu Nie"}
+      ],
+      "ai_keywords": ["llm", "parallelism"]
+    }
+  }
+]
+

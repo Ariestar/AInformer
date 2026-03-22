@@ -1,0 +1,50 @@
+services:
+  ainformer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ainformer
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      AINFORMER_SOURCES_CONFIG: /app/config/sources.toml
+      AINFORMER_RSSHUB_BASE_URL: http://rsshub:1200
+    depends_on:
+      rsshub:
+        condition: service_healthy
+
+  rsshub:
+    image: diygod/rsshub:latest
+    container_name: rsshub
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      CACHE_TYPE: redis
+      REDIS_URL: redis://redis:6379/
+    expose:
+      - "1200"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1200/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:alpine
+    container_name: rsshub-redis
+    restart: unless-stopped
+    volumes:
+      - rsshub-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  rsshub-redis-data:

@@ -1,0 +1,3 @@
+[fixture."fixture.local_demo"]
+name = "Fixture Demo"
+tags = ["fixture", "demo"]
