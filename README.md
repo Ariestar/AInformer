@@ -271,14 +271,14 @@ AINFORMER_RSSHUB_BASE_URL=http://127.0.0.1:1200
 ### 2. 拉取代码
 
 ```bash
-git clone <your-repo-url> /opt/ainformer
-cd /opt/ainformer
+git clone https://github.com/Ariestar/AInformer.git
+cd ainformer
 ```
 
 更新代码：
 
 ```bash
-cd /opt/ainformer
+cd ainformer
 git pull
 ```
 
@@ -294,7 +294,7 @@ git pull
 ### 4. 启动全套服务
 
 ```bash
-cd /opt/ainformer
+cd ainformer
 docker compose up -d --build
 ```
 
