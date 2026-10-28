@@ -8,11 +8,12 @@ out/ 里同时有 index.html 和 feed.xml —— **整个目录就是一个可�
 扔到 Cloudflare Pages / 任意静态托管就能被订阅。
 
 用法：
-    python bin/build_feed.py
-    python bin/build_feed.py --limit 100
-    python bin/build_feed.py --days 3
-    python bin/build_feed.py --tier official
-    python bin/build_feed.py --base-url https://intel.example.com
+    export AI_INTEL_BASE_URL=https://your-site.pages.dev
+    uv run python bin/build_feed.py
+    uv run python bin/build_feed.py --limit 100
+    uv run python bin/build_feed.py --days 3
+    uv run python bin/build_feed.py --tier official
+    uv run python bin/build_feed.py --base-url https://intel.example.com
 
 设计说明：
     - 不做价值筛选。喂什么发什么，判断权不在这层。
@@ -44,9 +45,9 @@ OUT_PATH = ROOT / "out" / "feed.xml"
 DEFAULT_TITLE = "AI 情报池"
 DEFAULT_DESC = "由 ai-intel 从多个一手源与中文源聚合而成。不做重要性筛选，只按时间排序。"
 
-# 线上地址。scaffold.py 会把 YOUR-PROJECT 换成真实项目名，
-# 也可以用 --base-url / 环境变量 AI_INTEL_BASE_URL 覆盖。
-DEFAULT_BASE_URL = os.environ.get("AI_INTEL_BASE_URL", "https://ai-intel.pages.dev")
+# 线上地址不写死：atom:link self 必须指向真实部署地址，
+# 猜错一次订阅器就拿到错的 URL。由 --base-url 或环境变量提供，缺了直接报错。
+BASE_URL_ENV = "AI_INTEL_BASE_URL"
 
 
 def _pub_dt(item: dict) -> datetime | None:
@@ -109,10 +110,16 @@ def main() -> int:
     ap.add_argument("--tier", default="", help="只要某些层级，逗号分隔：official,media,aggregator")
     ap.add_argument("--title", default=DEFAULT_TITLE)
     ap.add_argument("--desc", default=DEFAULT_DESC)
-    ap.add_argument("--base-url", default=DEFAULT_BASE_URL,
-                    help="部署后的站点根地址，用于 atom:link self")
+    ap.add_argument("--base-url", default=None,
+                    help=f"部署后的站点根地址，用于 atom:link self（默认取 {BASE_URL_ENV}）")
     ap.add_argument("--out", default=str(OUT_PATH))
     args = ap.parse_args()
+
+    base_url = (args.base_url or os.environ.get(BASE_URL_ENV, "")).strip().rstrip("/")
+    if not base_url:
+        print(f"缺少站点根地址。设环境变量 {BASE_URL_ENV}，或传 --base-url。", file=sys.stderr)
+        print("feed 的 atom:link self 必须指向真实地址，所以这里没有默认值。", file=sys.stderr)
+        return 2
 
     if not ITEMS_PATH.exists():
         print(f"找不到 {ITEMS_PATH}，先跑 bin/fetch.py", file=sys.stderr)
@@ -149,7 +156,7 @@ def main() -> int:
             balanced.append(x)
         items = balanced
 
-    xml = build(items, title=args.title, link=args.base_url, desc=args.desc, limit=args.limit)
+    xml = build(items, title=args.title, link=base_url, desc=args.desc, limit=args.limit)
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -163,7 +170,7 @@ def main() -> int:
     srcs = len({x.get("source_id") for x in items[:n]})
     print(f"已写入 {out}")
     print(f"  {n} 条 / {srcs} 个源{span}，{len(xml.encode('utf-8')) / 1024:.1f} KB")
-    print(f"  atom:link self = {args.base_url.rstrip('/')}/feed.xml")
+    print(f"  atom:link self = {base_url}/feed.xml")
     return 0
 
 
