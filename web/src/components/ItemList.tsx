@@ -1,5 +1,5 @@
-import type { Item } from "../lib/types";
 import { fmtDate } from "../lib/format";
+import type { Item } from "../lib/types";
 
 interface Props {
   items: Item[];
@@ -17,13 +17,12 @@ export default function ItemList({ items, selected, onToggle }: Props) {
           const on = selected.has(it.id);
           return (
             <div className={on ? "row sel" : "row"} key={it.id}>
-              <button
-                className={on ? "ck on" : "ck"}
-                type="button"
-                role="checkbox"
-                aria-checked={on}
+              <input
+                className="ck"
+                type="checkbox"
+                checked={on}
                 aria-label={`选中：${it.title}`}
-                onClick={() => onToggle(it.id)}
+                onChange={() => onToggle(it.id)}
               />
               <div className={`src ${it.tier}`} title={it.source_name}>
                 {it.source_name}

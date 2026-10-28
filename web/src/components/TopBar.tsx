@@ -18,6 +18,7 @@ export default function TopBar({ mode, total, selectedCount, onModeChange }: Pro
         </span>
         <div className="seg">
           <button
+            type="button"
             className={mode === "pool" ? "on" : undefined}
             aria-pressed={mode === "pool"}
             onClick={() => onModeChange("pool")}
@@ -25,6 +26,7 @@ export default function TopBar({ mode, total, selectedCount, onModeChange }: Pro
             条目池 <span className="cnt">{total}</span>
           </button>
           <button
+            type="button"
             className={mode === "brief" ? "on" : undefined}
             aria-pressed={mode === "brief"}
             onClick={() => onModeChange("brief")}

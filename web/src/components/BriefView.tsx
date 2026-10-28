@@ -1,5 +1,5 @@
-import type { Item } from "../lib/types";
 import { fmtDate, tierName } from "../lib/format";
+import type { Item } from "../lib/types";
 
 interface Props {
   items: Item[];
@@ -34,22 +34,16 @@ export default function BriefView({ items, cur, onSelect, onRemove }: Props) {
       <nav className="side" aria-label="已选条目">
         <div className="side-h">你的简报</div>
         {items.map((it, k) => (
-          <a
+          <button
             key={it.id}
+            type="button"
             className={k === cur ? "navitem active" : "navitem"}
-            tabIndex={0}
-            role="button"
+            aria-current={k === cur}
             onClick={() => onSelect(k)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSelect(k);
-              }
-            }}
           >
             <span className="n">{String(k + 1).padStart(2, "0")}</span>
             <span className="nt">{it.title}</span>
-          </a>
+          </button>
         ))}
       </nav>
 
@@ -71,23 +65,27 @@ export default function BriefView({ items, cur, onSelect, onRemove }: Props) {
               <a href={it.url} target="_blank" rel="noopener">
                 打开原文 ↗
               </a>
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onRemove(it.id);
-                }}
-              >
+              <button type="button" onClick={() => onRemove(it.id)}>
                 从简报移除
-              </a>
+              </button>
             </div>
           </article>
         ))}
         <div className="pager">
-          <button className="btn" type="button" disabled={cur === 0} onClick={() => onSelect(cur - 1)}>
+          <button
+            className="btn"
+            type="button"
+            disabled={cur === 0}
+            onClick={() => onSelect(cur - 1)}
+          >
             ← 上一条
           </button>
-          <button className="btn" type="button" disabled={cur === items.length - 1} onClick={() => onSelect(cur + 1)}>
+          <button
+            className="btn"
+            type="button"
+            disabled={cur === items.length - 1}
+            onClick={() => onSelect(cur + 1)}
+          >
             下一条 →
           </button>
           <span className="pos">

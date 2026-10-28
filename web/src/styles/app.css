@@ -60,7 +60,7 @@ body {
 body {
   background: var(--bg);
   color: var(--text);
-  font: 400 14px/1.5 var(--sans);
+  font: 400 14px / 1.5 var(--sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -99,7 +99,7 @@ select {
   box-shadow: 0 0 24px var(--primary-ring);
 }
 .brand {
-  font: 500 13px/1 var(--sans);
+  font: 500 13px / 1 var(--sans);
 }
 .brand span {
   color: var(--muted);
@@ -119,7 +119,7 @@ select {
   border: 0;
   background: transparent;
   color: var(--muted);
-  font: 500 13px/1 var(--sans);
+  font: 500 13px / 1 var(--sans);
   cursor: pointer;
   transition: background 0.1s linear;
 }
@@ -139,7 +139,7 @@ select {
   box-shadow: inset 0 0 0 2px var(--primary-ring);
 }
 .seg .cnt {
-  font: 400 11px/1 var(--mono);
+  font: 400 11px / 1 var(--mono);
   color: var(--muted);
   margin-left: 4px;
 }
@@ -200,13 +200,13 @@ select {
   gap: 8px;
 }
 .stat .k {
-  font: 600 11px/1 var(--sans);
+  font: 600 11px / 1 var(--sans);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--muted);
 }
 .stat .v {
-  font: 500 13px/1 var(--mono);
+  font: 500 13px / 1 var(--mono);
   color: var(--text);
 }
 .stat .v.dim {
@@ -242,7 +242,7 @@ select {
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
-  font: 400 13px/1 var(--sans);
+  font: 400 13px / 1 var(--sans);
   outline: none;
 }
 .inp::placeholder {
@@ -263,7 +263,7 @@ select {
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
-  font: 500 13px/1 var(--sans);
+  font: 500 13px / 1 var(--sans);
   cursor: pointer;
   transition: background 0.1s linear;
 }
@@ -290,7 +290,7 @@ select {
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
-  font: 500 13px/1 var(--sans);
+  font: 500 13px / 1 var(--sans);
   cursor: pointer;
   transition: background 0.1s linear;
 }
@@ -344,41 +344,40 @@ select {
   box-shadow: inset 2px 0 0 var(--primary);
 }
 .ck {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
   width: 16px;
   height: 16px;
-  margin-top: 2px;
+  margin: 2px 0 0;
   border: 1.5px solid var(--muted);
   border-radius: 9999px;
   background: transparent;
   cursor: pointer;
   padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.1s linear, border-color 0.1s linear;
+  transition:
+    background 0.1s linear,
+    border-color 0.1s linear;
   flex: none;
 }
 .ck:hover {
   border-color: var(--text);
 }
-.ck.on {
-  background: var(--primary);
+/* input 是替换元素，::after 不会渲染，对勾用内联 SVG 背景画 */
+.ck:checked {
+  background-color: var(--primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 8'%3E%3Cpath d='M1 4.2 3.6 6.8 9 1.4' fill='none' stroke='%23fff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 8px 6px;
   border-color: var(--primary);
-}
-.ck.on::after {
-  content: "";
-  width: 5px;
-  height: 8px;
-  border: solid #fff;
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg) translate(-1px, -1px);
 }
 .ck:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--primary-ring);
 }
 .src {
-  font: 400 11px/1.5 var(--sans);
+  font: 400 11px / 1.5 var(--sans);
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
@@ -394,14 +393,14 @@ select {
   min-width: 0;
 }
 .t .ti {
-  font: 500 14px/1.4 var(--sans);
+  font: 500 14px / 1.4 var(--sans);
   color: var(--text);
 }
 .t .ti:hover {
   color: var(--primary);
 }
 .t .sm {
-  font: 400 12px/1.5 var(--sans);
+  font: 400 12px / 1.5 var(--sans);
   color: var(--muted);
   margin-top: 2px;
   display: -webkit-box;
@@ -410,7 +409,7 @@ select {
   overflow: hidden;
 }
 .d {
-  font: 400 11px/1.5 var(--mono);
+  font: 400 11px / 1.5 var(--mono);
   color: var(--muted);
   text-align: right;
   white-space: nowrap;
@@ -434,7 +433,7 @@ select {
   padding: 40px;
   text-align: center;
   color: var(--muted);
-  font: 400 13px/1.6 var(--sans);
+  font: 400 13px / 1.6 var(--sans);
 }
 
 .stage {
@@ -448,7 +447,7 @@ select {
   align-self: start;
 }
 .side-h {
-  font: 600 11px/1 var(--sans);
+  font: 600 11px / 1 var(--sans);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--muted);
@@ -461,8 +460,14 @@ select {
   gap: 8px;
   align-items: start;
   padding: 8px 8px 8px 10px;
-  border-radius: 8px;
+  border: 0;
   border-left: 2px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
   margin-bottom: 2px;
   transition: background 0.1s linear;
@@ -475,14 +480,14 @@ select {
   border-left-color: var(--primary);
 }
 .navitem .n {
-  font: 400 11px/1.6 var(--mono);
+  font: 400 11px / 1.6 var(--mono);
   color: var(--muted);
 }
 .navitem.active .n {
   color: var(--primary);
 }
 .navitem .nt {
-  font: 400 13px/1.4 var(--sans);
+  font: 400 13px / 1.4 var(--sans);
   color: var(--muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -531,7 +536,7 @@ select {
   align-items: center;
   padding: 0 8px;
   border-radius: 4px;
-  font: 500 11px/1 var(--sans);
+  font: 500 11px / 1 var(--sans);
 }
 .chip.official {
   color: var(--success);
@@ -547,23 +552,23 @@ select {
 }
 .status {
   margin-left: auto;
-  font: 400 12px/1 var(--sans);
+  font: 400 12px / 1 var(--sans);
   color: var(--muted);
 }
 .slide h1 {
-  font: 600 20px/1.35 var(--sans);
+  font: 600 20px / 1.35 var(--sans);
   letter-spacing: -0.03em;
   margin: 0 0 20px;
 }
 .blk .k {
-  font: 600 11px/1 var(--sans);
+  font: 600 11px / 1 var(--sans);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 6px;
 }
 .blk .v {
-  font: 400 14px/1.7 var(--sans);
+  font: 400 14px / 1.7 var(--sans);
   color: var(--text-soft);
 }
 .srcs {
@@ -574,11 +579,17 @@ select {
   padding-top: 16px;
   border-top: 1px solid var(--border);
 }
-.srcs a {
-  font: 400 12px/1 var(--sans);
+.srcs a,
+.srcs button {
+  font: 400 12px / 1 var(--sans);
   color: var(--primary);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
-.srcs a:hover {
+.srcs a:hover,
+.srcs button:hover {
   color: var(--primary-hover);
   text-decoration: underline;
 }
@@ -591,7 +602,7 @@ select {
 }
 .pos {
   margin-left: auto;
-  font: 400 11px/1 var(--mono);
+  font: 400 11px / 1 var(--mono);
   color: var(--muted);
 }
 
