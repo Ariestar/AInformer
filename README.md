@@ -11,7 +11,8 @@ AI 行业情报系统：多源抓取 → 事实标注 → 单页站点 + RSS。
 | 抓取 + 归一 + 去重 | `bin/fetch.py` | `data/items.json` |
 | 事实标注（可选） | `bin/triage.py` | `data/triage.json` |
 | 源健康检查 | `bin/health.py` | `data/health.json`、`health_log.jsonl` |
-| 渲染条目池 | `bin/build_site.py` | `out/index.html` |
+| 导出前端契约 | `bin/export.py` | `web/public/data/items.json` |
+| 渲染条目池 | `web/`（Astro + React 岛屿） | `out/index.html` |
 | 生成 RSS 2.0 | `bin/build_feed.py` | `out/feed.xml` |
 | 一条命令全跑 | `bin/publish.py` | 以上全部 + 部署 |
 
@@ -19,20 +20,30 @@ AI 行业情报系统：多源抓取 → 事实标注 → 单页站点 + RSS。
 
 ## 快速开始
 
-需要 Python ≥ 3.11 和 [uv](https://docs.astral.sh/uv/)。
+需要 Python ≥ 3.11、[uv](https://docs.astral.sh/uv/) 和 [bun](https://bun.sh)。
 
 ```bash
 uv sync
+cd web && bun install && cd ..
 
 export AINFORMER_BASE_URL=https://your-site.pages.dev
 
 uv run python bin/fetch.py
-uv run python bin/build_site.py
+uv run python bin/export.py
+cd web && bun run build && cd ..
 uv run python bin/build_feed.py
 ```
 
-`out/index.html` 是单文件、无外部依赖，双击就能打开。里面有搜索、按源筛选、
-只看官方源、只看有日期、勾选导出 Markdown。
+改界面时用带热更新的开发服务器：
+
+```bash
+cd web && bun run dev
+```
+
+`out/` 是一个完整的静态站点，**要通过 HTTP 访问**（`cd web && bun run preview`，
+或部署后访问）：条目数据放在 `/data/items.json`，由浏览器单独请求，直接双击
+`out/index.html` 会因浏览器对 `file://` 的限制读不到数据。页面提供搜索、按源筛选、
+只看官方源、只看有日期、勾选导出 Markdown，以及深浅色切换。
 
 ## 信息源
 
@@ -62,7 +73,7 @@ uv run python bin/publish.py --no-deploy  # 只重建 out/
 
 `out/` 整个目录就是一个可部署站点。默认走 `bunx wrangler@4 pages deploy`，
 项目名由 `wrangler.toml` 的 `name` 决定，`--project` 可覆盖。
-Cloudflare 的 CORS 与缓存头在 `static/_headers`，构建时同步进 `out/`。
+Cloudflare 的 CORS 与缓存头在 `web/public/_headers`，随前端构建进入 `out/`。
 
 线上：
 
@@ -73,8 +84,9 @@ Cloudflare 的 CORS 与缓存头在 `static/_headers`，构建时同步进 `out/
 
 ```
 bin/           六个脚本，每个只干一件事
+web/           站点源码：Astro 页面 + React 岛屿 + 一份样式表
+schema/        前端数据契约，items.json 的唯一真相
 sources.toml   源清单（唯一需要日常改的文件）
-static/        静态配置，构建时同步进 out/
 regression/    历史取舍记录与基线（人工参考，不参与构建）
 docs/          源清单与提示词手册
 ```

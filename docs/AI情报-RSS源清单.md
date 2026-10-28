@@ -124,7 +124,8 @@ export AINFORMER_BASE_URL=https://ainformer.pages.dev
 
 uv run python bin/fetch.py            # 抓取 → data/items.json
 uv run python bin/triage.py           # 判断 → data/triage.json（需 TYPESAFE_API_KEY）
-uv run python bin/build_site.py       # → out/index.html
+uv run python bin/export.py           # 校验契约 → web/public/data/items.json
+cd web && bun run build && cd ..      # 渲染 → out/index.html
 uv run python bin/build_feed.py       # → out/feed.xml
 uv run python bin/publish.py          # 一条命令跑完上面全部 + 部署
 ```
@@ -142,8 +143,8 @@ uv run python bin/publish.py          # 一条命令跑完上面全部 + 部署
 
 旧的 `ai-intel-63f.pages.dev` 已随项目改名下线，订阅者需要换源。
 
-**静态配置**：Cloudflare 的 `_headers`（CORS、缓存）在 `static/_headers`，
-`build_site.py` 每次构建都会把它同步进 `out/`。`out/` 不入库，别往里面手写东西。
+**静态配置**：Cloudflare 的 `_headers`（CORS、缓存）在 `web/public/_headers`，
+前端构建时随 public 目录进入 `out/`。`out/` 不入库，别往里面手写东西。
 
 **演示时的两个坑**
 - 用脚本探活会拿到 403，Cloudflare 拦 `Python-urllib` 的 UA，换浏览器 UA 即 200。订阅器不受影响

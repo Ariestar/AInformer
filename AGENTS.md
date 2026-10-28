@@ -6,16 +6,17 @@ Keep this file limited to durable, cross-session guidance. Current progress, tem
 
 ## Project
 
-- Purpose:
-- Stack:
-- Package manager:
+- Purpose: AI 行业情报系统 —— 多源抓取 → 事实标注 → 静态站点 + RSS。核心约束是「机器不替人筛」：抓回来的条目原样呈现，取舍由人决定。
+- Stack: Python 3.11+（抓取、判断、feed，零运行时依赖）；Astro 5 + React 19 + TypeScript（站点，静态输出）；Cloudflare Pages（部署）。
+- Package manager: `uv`（Python）/ `bun`（前端）。
 
 ## Commands
 
-- Install:
-- Dev:
-- Test:
-- Check:
+- Install: `uv sync` 然后 `cd web && bun install`
+- Dev: `cd web && bun run dev`（热更新，需先跑过 `bin/export.py`）
+- Test: 暂无自动化测试；改动渲染逻辑后人工核对 `out/` 与 `regression/` 基线
+- Check: `uv run python bin/export.py`（契约校验）+ `cd web && bun run check`（类型检查）
+- Build: `uv run python bin/publish.py --no-deploy`（抓取 → 判断 → 导出 → 构建 → feed）
 
 ## Communication
 
@@ -161,7 +162,10 @@ Single track: the release tooling opens a Release PR whenever a versionable comm
 
 ## Project Invariants
 
-- Add project-specific constraints here.
+- 数据契约只有一份：`schema/pool.schema.json`。增删字段必须同时改 schema、`bin/export.py` 的 `to_export` 和 `web/src/lib/types.ts`，否则 `export.py` 会在构建前报错。
+- 站点视觉以 2026-10 重构前的单页为基线：布局、间距、字号、配色属于既定设计，改动需要明确授权，不要顺手"优化"。
+- `out/` 完全由构建生成，Astro 每次构建会清空它；因此 `build_feed.py` 必须排在站点构建之后（`publish.py` 已保证顺序）。
+- 条目数据通过 `/data/items.json` 由浏览器单独请求，首屏 HTML 只内联前 24 条。新增依赖数据的页面时复用这个文件，不要往 HTML 里再塞一份。
 
 ## Durable Handoff
 
