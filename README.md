@@ -64,6 +64,34 @@ cd web && bun run dev
 | `AINFORMER_BASE_URL` | 是 | 站点根地址。feed 的 `atom:link self` 依赖它，**没有默认值**，缺了直接退出码 2 |
 | `TYPESAFE_API_KEY` | 否 | 只有跑 `bin/triage.py` 时需要 |
 
+## 开发与检查
+
+```bash
+uv run ruff check bin tests
+uv run ruff format --check bin tests
+uv run pytest -q
+
+cd web && bun run lint && bun run check && bun run test
+```
+
+`bun run lint` 是 Biome（格式化 + 规则），`bun run check` 是 Astro 的类型检查。
+Biome 不处理 `.astro` 文件，那部分由 `astro check` 覆盖。
+
+## 自动化
+
+`.github/workflows/ci.yml` 在 push 和 PR 上跑 lint、类型检查、测试与一次 fixture 构建，
+不依赖外网源是否可用。`.github/workflows/deploy.yml` 在 main 推送、每天 22:00 UTC
+的定时任务以及手动触发时抓取并部署到 Cloudflare Pages。
+
+部署需要两个仓库 secret：
+
+| secret | 用途 |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Pages 部署权限 |
+| `CLOUDFLARE_ACCOUNT_ID` | 账号 ID |
+
+站点地址默认 `https://ainformer.pages.dev`，可用仓库变量 `AINFORMER_BASE_URL` 覆盖。
+
 ## 部署
 
 ```bash

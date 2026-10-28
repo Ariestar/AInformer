@@ -14,8 +14,8 @@ Keep this file limited to durable, cross-session guidance. Current progress, tem
 
 - Install: `uv sync` 然后 `cd web && bun install`
 - Dev: `cd web && bun run dev`（热更新，需先跑过 `bin/export.py`）
-- Test: 暂无自动化测试；改动渲染逻辑后人工核对 `out/` 与 `regression/` 基线
-- Check: `uv run python bin/export.py`（契约校验）+ `cd web && bun run check`（类型检查）
+- Test: `uv run pytest -q`；前端 `cd web && bun run test`（vitest）
+- Check: `uv run ruff check bin tests` + `cd web && bun run lint && bun run check`
 - Build: `uv run python bin/publish.py --no-deploy`（抓取 → 判断 → 导出 → 构建 → feed）
 
 ## Communication
@@ -165,7 +165,7 @@ Single track: the release tooling opens a Release PR whenever a versionable comm
 - 数据契约只有一份：`schema/pool.schema.json`。增删字段必须同时改 schema、`bin/export.py` 的 `to_export` 和 `web/src/lib/types.ts`，否则 `export.py` 会在构建前报错。
 - 站点视觉以 2026-10 重构前的单页为基线：布局、间距、字号、配色属于既定设计，改动需要明确授权，不要顺手"优化"。
 - `out/` 完全由构建生成，Astro 每次构建会清空它；因此 `build_feed.py` 必须排在站点构建之后（`publish.py` 已保证顺序）。
-- 条目数据通过 `/data/items.json` 由浏览器单独请求，首屏 HTML 只内联前 24 条。新增依赖数据的页面时复用这个文件，不要往 HTML 里再塞一份。
+- 条目数据有两个去处，都由 `bin/export.py` 一次写出：`web/src/data/items.json`（构建期 import，供 SSR 渲染前 24 条）和 `web/public/data/items.json`（浏览器运行时 fetch 全量）。不要手工编辑这两份，也不要再往 HTML 里塞第三份。
 
 ## Durable Handoff
 
