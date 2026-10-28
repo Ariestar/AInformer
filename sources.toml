@@ -65,7 +65,8 @@ id = "qbitai"
 name = "量子位"
 tier = "media"
 weight = 0.7
-# 「AI 三大刊」里唯一提供原生 RSS 的一家。机器之心、新智元都没有，见 runbook 的源审计表。
+# 「AI 三大刊」里唯一提供原生 RSS 的一家。机器之心、新智元都没有，
+# 源清单与取舍说明见 docs/AI情报-RSS源清单.md。
 url = "https://www.qbitai.com/feed"
 
 # ── 聚合源：二手精选，只作线索，不作事实依据 ──────
