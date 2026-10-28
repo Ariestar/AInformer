@@ -64,6 +64,11 @@ uv run python bin/publish.py --no-deploy  # 只重建 out/
 项目名由 `wrangler.toml` 的 `name` 决定，`--project` 可覆盖。
 Cloudflare 的 CORS 与缓存头在 `static/_headers`，构建时同步进 `out/`。
 
+线上：
+
+- 站点 https://ainformer.pages.dev
+- RSS https://ainformer.pages.dev/feed.xml
+
 ## 目录
 
 ```

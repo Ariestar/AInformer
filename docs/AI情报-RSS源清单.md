@@ -137,10 +137,10 @@ uv run python bin/publish.py          # 一条命令跑完上面全部 + 部署
 走 `uv run python bin/publish.py --no-triage` 跳过判断层，其余照常。
 
 **线上地址**
+- 站点 https://ainformer.pages.dev
+- RSS https://ainformer.pages.dev/feed.xml
 
-Cloudflare Pages 项目名是 `ainformer`，首次部署后地址为
-`https://ainformer.pages.dev`（以部署输出为准），RSS 在同域 `/feed.xml`。
-旧的 `ai-intel-63f.pages.dev` 随项目改名已停用，订阅者需要换源。
+旧的 `ai-intel-63f.pages.dev` 已随项目改名下线，订阅者需要换源。
 
 **静态配置**：Cloudflare 的 `_headers`（CORS、缓存）在 `static/_headers`，
 `build_site.py` 每次构建都会把它同步进 `out/`。`out/` 不入库，别往里面手写东西。
