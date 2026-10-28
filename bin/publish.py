@@ -27,6 +27,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import config
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -47,21 +49,25 @@ def run(label: str, cmd: list[str], cwd: Path = ROOT) -> None:
 
 
 def main() -> int:
+    cfg = config.load(require_base_url=False)
+
     ap = argparse.ArgumentParser(description="抓取 → 判断 → 导出 → 构建 → feed → 部署")
     ap.add_argument("--no-deploy", action="store_true", help="只重建 out/，不部署")
     ap.add_argument("--no-triage", action="store_true", help="跳过 Jev 判断层")
-    ap.add_argument("--limit", type=int, default=100, help="feed 最多多少条")
-    ap.add_argument("--per-source", type=int, default=10, help="单源配额")
-    ap.add_argument("--base-url", default=None, help=f"站点根地址，默认取 {BASE_URL_ENV}")
+    ap.add_argument("--limit", type=int, default=cfg.feed_limit, help="feed 最多多少条")
+    ap.add_argument("--per-source", type=int, default=cfg.feed_per_source, help="单源配额")
+    ap.add_argument(
+        "--base-url", default=cfg.base_url, help="站点根地址，默认取 AINFORMER_BASE_URL"
+    )
     ap.add_argument(
         "--project", default=None, help="Cloudflare Pages 项目名，默认由 wrangler.toml 的 name 决定"
     )
     args = ap.parse_args()
 
     # 地址先解析：feed 的 atom:link self 依赖它，缺了就别开始跑
-    base = (args.base_url or os.environ.get(BASE_URL_ENV, "")).strip().rstrip("/")
+    base = (args.base_url or "").strip().rstrip("/")
     if not base:
-        print(f"缺少站点根地址。设环境变量 {BASE_URL_ENV}，或传 --base-url。", file=sys.stderr)
+        print("缺少站点根地址。设 AINFORMER_BASE_URL，或传 --base-url。", file=sys.stderr)
         return 2
     os.environ[BASE_URL_ENV] = base  # 子进程共用同一个地址
 

@@ -22,6 +22,8 @@ from html import unescape
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+import config
+
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "sources.toml"
 DATA = ROOT / "data"
@@ -152,9 +154,10 @@ def main() -> int:
 
     cfg = load_config()
     fc = cfg.get("fetch", {})
+    settings = config.load(require_base_url=False)
     days = args.days if args.days is not None else fc.get("days", 5)
     timeout = fc.get("timeout", 20)
-    ua = fc.get("user_agent", "ainformer/1.0")
+    ua = fc.get("user_agent") or settings.user_agent
     cap = fc.get("max_per_source", 15)
     blacklist = [w.lower() for w in cfg.get("filter", {}).get("blacklist", [])]
 

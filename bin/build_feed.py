@@ -27,12 +27,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
+
+import config
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -40,13 +41,6 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = Path(__file__).resolve().parent.parent
 ITEMS_PATH = ROOT / "data" / "items.json"
 OUT_PATH = ROOT / "out" / "feed.xml"
-
-DEFAULT_TITLE = "AI 情报池"
-DEFAULT_DESC = "由 AInformer 从多个一手源与中文源聚合而成。不做重要性筛选，只按时间排序。"
-
-# 线上地址不写死：atom:link self 必须指向真实部署地址，
-# 猜错一次订阅器就拿到错的 URL。由 --base-url 或环境变量提供，缺了直接报错。
-BASE_URL_ENV = "AINFORMER_BASE_URL"
 
 
 def _pub_dt(item: dict) -> datetime | None:
@@ -101,26 +95,28 @@ def build(items: list[dict], *, title: str, link: str, desc: str, limit: int) ->
 
 
 def main() -> int:
+    cfg = config.load(require_base_url=False)
+
     ap = argparse.ArgumentParser(description="把情报池发布成 RSS")
-    ap.add_argument("--limit", type=int, default=100, help="最多输出多少条（默认 100）")
+    ap.add_argument("--limit", type=int, default=cfg.feed_limit, help="最多输出多少条")
     ap.add_argument(
-        "--per-source", type=int, default=10, help="单个源最多占多少条（默认 10，0 = 不限）"
+        "--per-source", type=int, default=cfg.feed_per_source, help="单个源最多占多少条（0 = 不限）"
     )
     ap.add_argument("--days", type=int, default=0, help="只发最近 N 天（默认不限）")
     ap.add_argument("--tier", default="", help="只要某些层级，逗号分隔：official,media,aggregator")
-    ap.add_argument("--title", default=DEFAULT_TITLE)
-    ap.add_argument("--desc", default=DEFAULT_DESC)
+    ap.add_argument("--title", default=cfg.site_name)
+    ap.add_argument("--desc", default=cfg.site_desc)
     ap.add_argument(
         "--base-url",
-        default=None,
-        help=f"部署后的站点根地址，用于 atom:link self（默认取 {BASE_URL_ENV}）",
+        default=cfg.base_url,
+        help="部署后的站点根地址，用于 atom:link self（默认取 AINFORMER_BASE_URL）",
     )
     ap.add_argument("--out", default=str(OUT_PATH))
     args = ap.parse_args()
 
-    base_url = (args.base_url or os.environ.get(BASE_URL_ENV, "")).strip().rstrip("/")
+    base_url = (args.base_url or "").strip().rstrip("/")
     if not base_url:
-        print(f"缺少站点根地址。设环境变量 {BASE_URL_ENV}，或传 --base-url。", file=sys.stderr)
+        print("缺少站点根地址。设 AINFORMER_BASE_URL，或传 --base-url。", file=sys.stderr)
         print("feed 的 atom:link self 必须指向真实地址，所以这里没有默认值。", file=sys.stderr)
         return 2
 

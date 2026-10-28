@@ -30,13 +30,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import sys
 import time
 import urllib.error
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
+
+import config
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -45,9 +46,10 @@ ROOT = Path(__file__).resolve().parent.parent
 ITEMS_PATH = ROOT / "data" / "items.json"
 OUT_PATH = ROOT / "data" / "triage.json"
 
-JEV_BASE = os.environ.get("TYPESAFE_BASE_URL", "https://api.typesafe.ai").rstrip("/")
+_SETTINGS = config.load(require_base_url=False)
+JEV_BASE = _SETTINGS.typesafe_base
 JEV_ENDPOINT = JEV_BASE + "/v1/systemone"
-JEV_MODEL = os.environ.get("JEV_MODEL", "jev-latest")
+JEV_MODEL = _SETTINGS.jev_model
 TIMEOUT = 30
 
 # 限流与服务过载要退避重试 —— 这是官方 SDK 的既定行为，不是降级。
@@ -179,7 +181,7 @@ def main() -> int:
         print("\n--dry-run：未调用接口，未写入任何文件。")
         return 0
 
-    api_key = os.environ.get("TYPESAFE_API_KEY", "").strip()
+    api_key = _SETTINGS.typesafe_key
     if not api_key:
         print("未设置 TYPESAFE_API_KEY。", file=sys.stderr)
         print("", file=sys.stderr)

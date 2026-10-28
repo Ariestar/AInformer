@@ -3,7 +3,9 @@ name = "ainformer"
 version = "0.1.0"
 description = "AI 行业情报系统：多源抓取 → 判断 → 静态站点 + RSS"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "python-dotenv>=1.2.4",
+]
 
 [dependency-groups]
 dev = [
@@ -36,7 +38,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["export", "fetch", "health", "triage"]
+known-first-party = ["config", "export", "fetch", "health", "triage"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
