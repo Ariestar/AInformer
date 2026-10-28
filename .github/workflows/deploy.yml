@@ -1,0 +1,52 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  # 每天 22:00 UTC（北京时间 06:00）抓一轮，站点不依赖本地机器
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: deploy-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AINFORMER_BASE_URL: ${{ vars.AINFORMER_BASE_URL || 'https://ainformer.pages.dev' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: uv sync --frozen
+
+      - name: fetch sources
+        run: uv run python bin/fetch.py
+      - name: export contract
+        run: uv run python bin/export.py
+
+      - run: bun install --frozen-lockfile
+        working-directory: web
+      - run: bun run build
+        working-directory: web
+
+      - name: build feed
+        run: uv run python bin/build_feed.py --base-url "$AINFORMER_BASE_URL"
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          packageManager: bun
+          command: pages deploy out --project-name ainformer --branch main
