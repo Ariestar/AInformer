@@ -11,16 +11,19 @@ https://designmd.ai/chef/violet-issue
 
 数据源：data/items.json
 输出：out/index.html（单文件，无外部依赖）
+      static/ 下的静态配置（如 Cloudflare 的 _headers）同步进 out/
 """
 from __future__ import annotations
 
 import html
 import json
+import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 OUT = ROOT / "out"
+STATIC = ROOT / "static"
 
 E = html.escape
 
@@ -492,7 +495,7 @@ def build() -> Path:
 <footer><div class="inner">
   <span>机器不替你筛：全部 {len(items)} 条原样呈现，取舍由你决定</span>
   <span>设计系统：Violet Issue（DESIGNmd / MIT）</span>
-  <span>改源 sources.toml · 重新抓取 python bin/fetch.py</span>
+  <span>改源 sources.toml · 重新抓取 uv run python bin/fetch.py</span>
 </div></footer>
 
 <script>window.__ITEMS__ = {json.dumps(slim, ensure_ascii=False)};</script>
@@ -501,6 +504,15 @@ def build() -> Path:
 </html>
 """
     OUT.mkdir(parents=True, exist_ok=True)
+
+    # out/ 是产物目录、不入库，所以 Cloudflare 的 _headers 这类静态配置
+    # 必须留在 static/ 里随构建同步过去，否则新克隆一次部署就丢了。
+    if STATIC.is_dir():
+        for src in sorted(STATIC.iterdir()):
+            if src.is_file():
+                shutil.copy2(src, OUT / src.name)
+                print(f"同步静态文件：static/{src.name} → out/{src.name}")
+
     path = OUT / "index.html"
     path.write_text(page, encoding="utf-8")
     print(f"渲染完成：{path}")

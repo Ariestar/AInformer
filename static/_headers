@@ -1,0 +1,6 @@
+/feed.xml
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=600
+
+/index.html
+  Cache-Control: public, max-age=60
