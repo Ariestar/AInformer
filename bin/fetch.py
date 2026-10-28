@@ -4,6 +4,7 @@
 职责边界：只做 IO 和格式归一。
 不做判断、不做排序以外的加工、不写文案。
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,7 @@ import tomllib
 import urllib.error
 import urllib.request
 import zlib
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from html import unescape
 from pathlib import Path
@@ -49,21 +50,24 @@ def parse_date(raw: str | None) -> datetime | None:
     try:
         dt = parsedate_to_datetime(raw)
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt.astimezone(timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
+        return dt.astimezone(UTC)
     except (TypeError, ValueError):
         pass
     try:
         dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt.astimezone(timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
+        return dt.astimezone(UTC)
     except ValueError:
         return None
 
 
 def fetch_bytes(url: str, timeout: int, ua: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": ua, "Accept": "application/rss+xml, application/xml, text/xml, */*"})
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": ua, "Accept": "application/rss+xml, application/xml, text/xml, */*"},
+    )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         blob = resp.read()
         enc = (resp.headers.get("Content-Encoding") or "").lower()
@@ -98,8 +102,12 @@ def parse_feed(blob: bytes) -> list[dict]:
                     break
             if not link:
                 link = entry.findtext(f"{ATOM}id") or ""
-            date = parse_date(entry.findtext(f"{ATOM}published") or entry.findtext(f"{ATOM}updated"))
-            summary = strip_html(entry.findtext(f"{ATOM}summary") or entry.findtext(f"{ATOM}content") or "")
+            date = parse_date(
+                entry.findtext(f"{ATOM}published") or entry.findtext(f"{ATOM}updated")
+            )
+            summary = strip_html(
+                entry.findtext(f"{ATOM}summary") or entry.findtext(f"{ATOM}content") or ""
+            )
             out.append({"title": title, "url": link, "published": date, "summary": summary})
         return out
 
@@ -116,7 +124,9 @@ def parse_feed(blob: bytes) -> list[dict]:
                 link = guid.strip()
         date = parse_date(item.findtext("pubDate") or item.findtext(f"{{{NS['dc']}}}date"))
         body = item.findtext(f"{{{NS['content']}}}encoded") or item.findtext("description") or ""
-        out.append({"title": title, "url": link, "published": date, "summary": strip_html(body)[:400]})
+        out.append(
+            {"title": title, "url": link, "published": date, "summary": strip_html(body)[:400]}
+        )
     return out
 
 
@@ -148,7 +158,7 @@ def main() -> int:
     cap = fc.get("max_per_source", 15)
     blacklist = [w.lower() for w in cfg.get("filter", {}).get("blacklist", [])]
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     cutoff = now - timedelta(days=days)
 
     items: list[dict] = []
@@ -181,17 +191,19 @@ def main() -> int:
             if kept >= cap:
                 break
             kept += 1
-            items.append({
-                "source_id": sid,
-                "source_name": src["name"],
-                "tier": src.get("tier", "media"),
-                "weight": src.get("weight", 0.5),
-                "title": e["title"],
-                "url": e["url"],
-                "published": pub.isoformat() if pub else None,
-                "summary": e["summary"][:400],
-                "fetched_at": now.isoformat(),
-            })
+            items.append(
+                {
+                    "source_id": sid,
+                    "source_name": src["name"],
+                    "tier": src.get("tier", "media"),
+                    "weight": src.get("weight", 0.5),
+                    "title": e["title"],
+                    "url": e["url"],
+                    "published": pub.isoformat() if pub else None,
+                    "summary": e["summary"][:400],
+                    "fetched_at": now.isoformat(),
+                }
+            )
         rec["kept"] = kept
         source_report.append(rec)
         flag = "ok  " if kept else "zero"
@@ -207,7 +219,9 @@ def main() -> int:
         seen_title.add(t)
         deduped.append(it)
 
-    deduped.sort(key=lambda x: (x["published"] is None, _neg_str(x["published"] or ""), -x["weight"]))
+    deduped.sort(
+        key=lambda x: (x["published"] is None, _neg_str(x["published"] or ""), -x["weight"])
+    )
 
     payload = {
         "generated_at": now.isoformat(),
@@ -228,7 +242,9 @@ def main() -> int:
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     s = payload["stats"]
-    print(f"\n源 {s['sources_ok']}/{s['sources_total']} 正常 | 原始 {s['raw_items']} 条 | 去重后 {s['after_dedup']} 条")
+    print(
+        f"\n源 {s['sources_ok']}/{s['sources_total']} 正常 | 原始 {s['raw_items']} 条 | 去重后 {s['after_dedup']} 条"
+    )
     print(f"写入 {out_path}")
     return 0 if s["sources_ok"] else 1
 

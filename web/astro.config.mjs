@@ -1,6 +1,6 @@
 import { rm } from "node:fs/promises";
-import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
+import { defineConfig } from "astro/config";
 
 // Astro 会把 content layer 的构建元数据和缓存写进输出目录，它们不参与部署，
 // 留在 out/ 里既浪费空间也会被 Cloudflare 一起发出去。

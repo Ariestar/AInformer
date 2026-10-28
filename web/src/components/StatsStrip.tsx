@@ -7,7 +7,14 @@ interface Props {
   windowDays: number;
 }
 
-export default function StatsStrip({ sourcesOk, sourcesTotal, fetched, shown, selected, windowDays }: Props) {
+export default function StatsStrip({
+  sourcesOk,
+  sourcesTotal,
+  fetched,
+  shown,
+  selected,
+  windowDays,
+}: Props) {
   return (
     <div className="strip">
       <div className="inner">

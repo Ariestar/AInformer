@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 triage.py —— Jev 判断层
 
@@ -36,7 +35,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -122,8 +121,10 @@ def _post(body: dict, api_key: str) -> dict:
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             if e.code in RETRY_CODES and attempt < MAX_ATTEMPTS:
-                print(f"    HTTP {e.code}，{delay:.0f}s 后重试（{attempt}/{MAX_ATTEMPTS}）",
-                      file=sys.stderr)
+                print(
+                    f"    HTTP {e.code}，{delay:.0f}s 后重试（{attempt}/{MAX_ATTEMPTS}）",
+                    file=sys.stderr,
+                )
                 time.sleep(delay)
                 delay *= 2
                 continue
@@ -168,9 +169,13 @@ def main() -> int:
     if args.dry_run:
         print(f"端点 {JEV_ENDPOINT} · 模型 {JEV_MODEL} · 条目 {len(items)}")
         print("将要发送的请求体（第一条）：")
-        print(json.dumps(
-            {"model": JEV_MODEL, "state": _state(items[0]), "questions": QUESTIONS},
-            ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {"model": JEV_MODEL, "state": _state(items[0]), "questions": QUESTIONS},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
         print("\n--dry-run：未调用接口，未写入任何文件。")
         return 0
 
@@ -194,22 +199,24 @@ def main() -> int:
         title = (item.get("title") or "")[:50]
         try:
             payload = _post(
-                {"model": JEV_MODEL, "state": _state(item), "questions": QUESTIONS}, api_key)
+                {"model": JEV_MODEL, "state": _state(item), "questions": QUESTIONS}, api_key
+            )
             parsed, version = _parse(payload)
             results[_key(item)] = parsed
         except Exception as e:
             # 不替换、不跳过、不猜。一条判不了就整体失败，让人看见。
             print(f"\n第 {i} 条失败：{title}", file=sys.stderr)
             print(f"  {type(e).__name__}: {e}", file=sys.stderr)
-            print("  未写入 data/triage.json —— 宁可没有结果，也不要半真半假的结果。",
-                  file=sys.stderr)
+            print(
+                "  未写入 data/triage.json —— 宁可没有结果，也不要半真半假的结果。", file=sys.stderr
+            )
             return 1
 
         if i % 10 == 0 or i == len(items):
             print(f"  {i}/{len(items)}")
 
     out = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "engine": version,
         "endpoint": JEV_ENDPOINT,
         "note": "本文件只做事实标注，不排序、不筛选；判断权仍在人。",
@@ -224,15 +231,21 @@ def main() -> int:
     for v in results.values():
         topic_dist[v["topic"]] = topic_dist.get(v["topic"], 0) + 1
     low = sorted(
-        ((v["is_ai_related"], (items[k].get("title") or "")[:56])
-         for k, v in results.items() if v["is_ai_related"] < 0.5),
-        key=lambda x: x[0])
+        (
+            (v["is_ai_related"], (items[k].get("title") or "")[:56])
+            for k, v in results.items()
+            if v["is_ai_related"] < 0.5
+        ),
+        key=lambda x: x[0],
+    )
 
     print(f"\n已写入 {OUT_PATH.relative_to(ROOT)}（引擎 {version}）")
     print(f"  AI 相关 {ai_n} / {len(results)}（阈值 0.5，只标注不隐藏）")
     print(f"  既成事实 {ann_n} / {len(results)}，其余为观点/预测")
-    print("  类型分布 " + "、".join(f"{k} {v}" for k, v in
-                                   sorted(topic_dist.items(), key=lambda x: -x[1])))
+    print(
+        "  类型分布 "
+        + "、".join(f"{k} {v}" for k, v in sorted(topic_dist.items(), key=lambda x: -x[1]))
+    )
     if low:
         print("\n  低 AI 相关度（仅供参考，未从池中移除）：")
         for s, t in low[:8]:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 build_feed.py —— 把自己的情报池发布成标准 RSS 2.0
 
@@ -30,7 +29,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -58,11 +57,11 @@ def _pub_dt(item: dict) -> datetime | None:
         dt = datetime.fromisoformat(raw)
     except ValueError:
         return None
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
 def build(items: list[dict], *, title: str, link: str, desc: str, limit: int) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     parts: list[str] = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
@@ -104,14 +103,18 @@ def build(items: list[dict], *, title: str, link: str, desc: str, limit: int) ->
 def main() -> int:
     ap = argparse.ArgumentParser(description="把情报池发布成 RSS")
     ap.add_argument("--limit", type=int, default=100, help="最多输出多少条（默认 100）")
-    ap.add_argument("--per-source", type=int, default=10,
-                    help="单个源最多占多少条（默认 10，0 = 不限）")
+    ap.add_argument(
+        "--per-source", type=int, default=10, help="单个源最多占多少条（默认 10，0 = 不限）"
+    )
     ap.add_argument("--days", type=int, default=0, help="只发最近 N 天（默认不限）")
     ap.add_argument("--tier", default="", help="只要某些层级，逗号分隔：official,media,aggregator")
     ap.add_argument("--title", default=DEFAULT_TITLE)
     ap.add_argument("--desc", default=DEFAULT_DESC)
-    ap.add_argument("--base-url", default=None,
-                    help=f"部署后的站点根地址，用于 atom:link self（默认取 {BASE_URL_ENV}）")
+    ap.add_argument(
+        "--base-url",
+        default=None,
+        help=f"部署后的站点根地址，用于 atom:link self（默认取 {BASE_URL_ENV}）",
+    )
     ap.add_argument("--out", default=str(OUT_PATH))
     args = ap.parse_args()
 
@@ -135,7 +138,7 @@ def main() -> int:
         items = [x for x in items if x.get("tier") in tiers]
 
     if args.days > 0:
-        cutoff = datetime.now(timezone.utc) - timedelta(days=args.days)
+        cutoff = datetime.now(UTC) - timedelta(days=args.days)
         items = [x for x in items if (_pub_dt(x) or cutoff) >= cutoff]
 
     # 有日期的按时间倒序，没日期的垫底 —— 绝不用抓取时间冒充发布时间

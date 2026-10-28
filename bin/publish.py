@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """publish.py —— 一条命令跑完「抓取 → 判断 → 导出 → 构建站点 → 生成 feed → 部署」
 
 用法：
@@ -18,6 +17,7 @@
       feed 的 atom:link self 指向不存在的地址。
     - 任何一步的原始输出都直接透传，不在中间吞掉错误。
 """
+
 from __future__ import annotations
 
 import argparse
@@ -52,10 +52,10 @@ def main() -> int:
     ap.add_argument("--no-triage", action="store_true", help="跳过 Jev 判断层")
     ap.add_argument("--limit", type=int, default=100, help="feed 最多多少条")
     ap.add_argument("--per-source", type=int, default=10, help="单源配额")
-    ap.add_argument("--base-url", default=None,
-                    help=f"站点根地址，默认取 {BASE_URL_ENV}")
-    ap.add_argument("--project", default=None,
-                    help="Cloudflare Pages 项目名，默认由 wrangler.toml 的 name 决定")
+    ap.add_argument("--base-url", default=None, help=f"站点根地址，默认取 {BASE_URL_ENV}")
+    ap.add_argument(
+        "--project", default=None, help="Cloudflare Pages 项目名，默认由 wrangler.toml 的 name 决定"
+    )
     args = ap.parse_args()
 
     # 地址先解析：feed 的 atom:link self 依赖它，缺了就别开始跑
@@ -84,20 +84,26 @@ def main() -> int:
 
     run("4/6 构建站点", [bun, "run", "build"], cwd=WEB)
 
-    run("5/6 生成 feed", [
-        py, str(BIN / "build_feed.py"),
-        "--limit", str(args.limit),
-        "--per-source", str(args.per_source),
-        "--base-url", base,
-    ])
+    run(
+        "5/6 生成 feed",
+        [
+            py,
+            str(BIN / "build_feed.py"),
+            "--limit",
+            str(args.limit),
+            "--per-source",
+            str(args.per_source),
+            "--base-url",
+            base,
+        ],
+    )
 
     if args.no_deploy:
         print("\n=== 6/6 部署（已跳过）===")
         print(f"产物在 {OUT}")
         return 0
 
-    deploy = [bun, "x", "wrangler@4", "pages", "deploy",
-              "--branch", "main", "--commit-dirty=true"]
+    deploy = [bun, "x", "wrangler@4", "pages", "deploy", "--branch", "main", "--commit-dirty=true"]
     if args.project:
         deploy += ["--project-name", args.project]
     run("6/6 部署到 Cloudflare Pages", deploy, cwd=ROOT)
