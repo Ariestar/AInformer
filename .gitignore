@@ -11,6 +11,7 @@ out/*
 # ── 依赖与缓存 ──────────────────────────────────
 node_modules/
 .wrangler/
+.venv/
 __pycache__/
 *.py[cod]
 
