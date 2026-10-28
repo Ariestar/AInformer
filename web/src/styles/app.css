@@ -1,0 +1,650 @@
+/* 视觉系统沿用重构前的单页样式：配色、间距、字号、栅格全部保持原值。
+   唯一的结构性改动是把硬编码颜色抽成变量，并补一组亮色主题。
+   改动任何尺寸前先确认：这是"保持现有界面"的重构，不是重新设计。 */
+
+:root {
+  color-scheme: dark;
+  --bg: #101014;
+  --card: #1b1b25;
+  --surface: #1f1f2e;
+  --surface-2: #252536;
+  --primary: #5e6ad2;
+  --primary-hover: #4e5bbf;
+  --primary-soft: rgba(94, 106, 210, 0.1);
+  --primary-ring: rgba(94, 106, 210, 0.15);
+  --text: #f1f1f4;
+  --text-soft: #c9ccd6;
+  --muted: #8a8f98;
+  --border: #2c2c3a;
+  --row-line: rgba(44, 44, 58, 0.5);
+  --success: #3dd68c;
+  --warning: #f0c000;
+  --error: #eb5757;
+  --chip-official-bg: rgba(61, 214, 140, 0.2);
+  --chip-media-bg: rgba(240, 192, 0, 0.2);
+  --chip-aggregator-bg: rgba(94, 106, 210, 0.2);
+  --sans: "Inter", -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f6f9;
+  --card: #ffffff;
+  --surface: #f0f0f5;
+  --surface-2: #e8e8f0;
+  --primary: #5e6ad2;
+  --primary-hover: #4e5bbf;
+  --primary-soft: rgba(94, 106, 210, 0.08);
+  --primary-ring: rgba(94, 106, 210, 0.2);
+  --text: #17171f;
+  --text-soft: #3d404c;
+  --muted: #6a6e7b;
+  --border: #e2e2ec;
+  --row-line: rgba(226, 226, 236, 0.9);
+  --success: #0e8a5f;
+  --warning: #a8741a;
+  --error: #d14545;
+  --chip-official-bg: rgba(14, 138, 95, 0.12);
+  --chip-media-bg: rgba(168, 116, 26, 0.14);
+  --chip-aggregator-bg: rgba(94, 106, 210, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.topbar .inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--primary);
+  flex: none;
+  box-shadow: 0 0 24px var(--primary-ring);
+}
+.brand {
+  font: 500 13px/1 var(--sans);
+}
+.brand span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.seg {
+  margin-left: auto;
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.seg button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 500 13px/1 var(--sans);
+  cursor: pointer;
+  transition: background 0.1s linear;
+}
+.seg button + button {
+  border-left: 1px solid var(--border);
+}
+.seg button:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+.seg button.on {
+  background: var(--primary-soft);
+  color: var(--text);
+}
+.seg button:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--primary-ring);
+}
+.seg .cnt {
+  font: 400 11px/1 var(--mono);
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.theme {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  flex: none;
+  transition: background 0.1s linear;
+}
+.theme:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+.theme:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-ring);
+}
+.theme svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+/* 图标由 data-theme 决定，不靠 JS 状态，避免首帧闪一下 */
+.theme .i-moon {
+  display: none;
+}
+:root[data-theme="light"] .theme .i-sun {
+  display: none;
+}
+:root[data-theme="light"] .theme .i-moon {
+  display: block;
+}
+
+.strip {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.strip .inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.stat .k {
+  font: 600 11px/1 var(--sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.stat .v {
+  font: 500 13px/1 var(--mono);
+  color: var(--text);
+}
+.stat .v.dim {
+  color: var(--muted);
+}
+.stat .v.warn {
+  color: var(--warning);
+}
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.main {
+  padding: 24px 0 64px;
+}
+
+.bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+}
+/* 下拉框用 .pick：原来的 .sel 会和选中行的 .row.sel 撞车，
+   把下拉框的 height/padding/font 一起套到列表行上。 */
+.inp,
+.pick {
+  height: 28px;
+  padding: 0 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: 400 13px/1 var(--sans);
+  outline: none;
+}
+.inp::placeholder {
+  color: var(--muted);
+}
+.inp:focus,
+.pick:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-ring);
+}
+.inp.q {
+  width: 240px;
+}
+.tog {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 13px/1 var(--sans);
+  cursor: pointer;
+  transition: background 0.1s linear;
+}
+.tog:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+.tog.on {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--text);
+}
+.tog:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-ring);
+}
+.bar .sp {
+  margin-left: auto;
+}
+.btn {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 13px/1 var(--sans);
+  cursor: pointer;
+  transition: background 0.1s linear;
+}
+.btn:hover {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--muted);
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-ring);
+}
+.btn.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: #fff;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.list {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card);
+}
+.row {
+  display: grid;
+  grid-template-columns: 24px 92px 1fr 84px 20px;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--row-line);
+  transition: background 0.1s linear;
+}
+.row:last-child {
+  border-bottom: none;
+}
+.row:hover {
+  background: var(--surface);
+}
+.row.sel {
+  background: var(--primary-soft);
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+.ck {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1.5px solid var(--muted);
+  border-radius: 9999px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s linear, border-color 0.1s linear;
+  flex: none;
+}
+.ck:hover {
+  border-color: var(--text);
+}
+.ck.on {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.ck.on::after {
+  content: "";
+  width: 5px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+.ck:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-ring);
+}
+.src {
+  font: 400 11px/1.5 var(--sans);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.src.official {
+  color: var(--success);
+}
+.src.aggregator {
+  color: var(--primary);
+}
+.t {
+  min-width: 0;
+}
+.t .ti {
+  font: 500 14px/1.4 var(--sans);
+  color: var(--text);
+}
+.t .ti:hover {
+  color: var(--primary);
+}
+.t .sm {
+  font: 400 12px/1.5 var(--sans);
+  color: var(--muted);
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.d {
+  font: 400 11px/1.5 var(--mono);
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
+.d.none {
+  color: var(--warning);
+}
+.ext {
+  color: var(--border);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ext:hover {
+  color: var(--primary);
+}
+/* 原样式把外链箭头压到接近边框色，深色底能看出轮廓，浅色底会消失 */
+:root[data-theme="light"] .ext {
+  color: #c8cbd8;
+}
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+  font: 400 13px/1.6 var(--sans);
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+}
+.side {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+}
+.side-h {
+  font: 600 11px/1 var(--sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+.navitem {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 8px;
+  align-items: start;
+  padding: 8px 8px 8px 10px;
+  border-radius: 8px;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: background 0.1s linear;
+}
+.navitem:hover {
+  background: var(--surface);
+}
+.navitem.active {
+  background: var(--primary-soft);
+  border-left-color: var(--primary);
+}
+.navitem .n {
+  font: 400 11px/1.6 var(--mono);
+  color: var(--muted);
+}
+.navitem.active .n {
+  color: var(--primary);
+}
+.navitem .nt {
+  font: 400 13px/1.4 var(--sans);
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.navitem.active .nt {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+.slide {
+  display: none;
+  padding: 32px;
+  flex: 1;
+}
+.slide.active {
+  display: block;
+  animation: in 0.12s ease-out;
+}
+@keyframes in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.smeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.chip {
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 4px;
+  font: 500 11px/1 var(--sans);
+}
+.chip.official {
+  color: var(--success);
+  background: var(--chip-official-bg);
+}
+.chip.media {
+  color: var(--warning);
+  background: var(--chip-media-bg);
+}
+.chip.aggregator {
+  color: var(--primary);
+  background: var(--chip-aggregator-bg);
+}
+.status {
+  margin-left: auto;
+  font: 400 12px/1 var(--sans);
+  color: var(--muted);
+}
+.slide h1 {
+  font: 600 20px/1.35 var(--sans);
+  letter-spacing: -0.03em;
+  margin: 0 0 20px;
+}
+.blk .k {
+  font: 600 11px/1 var(--sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.blk .v {
+  font: 400 14px/1.7 var(--sans);
+  color: var(--text-soft);
+}
+.srcs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.srcs a {
+  font: 400 12px/1 var(--sans);
+  color: var(--primary);
+}
+.srcs a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+.pos {
+  margin-left: auto;
+  font: 400 11px/1 var(--mono);
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 900px) {
+  .wrap,
+  .topbar .inner,
+  .strip .inner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .stage {
+    grid-template-columns: 1fr;
+  }
+  .side {
+    position: static;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .side-h {
+    display: none;
+  }
+  .navitem {
+    grid-template-columns: 1fr;
+    min-width: 150px;
+    margin: 0;
+  }
+  .navitem .n {
+    display: none;
+  }
+  .row {
+    grid-template-columns: 24px 1fr;
+    row-gap: 4px;
+  }
+  .row .src,
+  .row .d,
+  .row .ext {
+    display: none;
+  }
+  .inp.q {
+    width: 100%;
+  }
+  .slide {
+    padding: 20px;
+  }
+  .slide h1 {
+    font-size: 16px;
+  }
+}

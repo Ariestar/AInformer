@@ -1,0 +1,37 @@
+---
+import { readFileSync } from "node:fs";
+import PoolApp from "../components/PoolApp";
+import "../styles/app.css";
+import type { PoolPayload } from "../lib/types";
+
+// 构建期读一次数据，只取统计字段用于静态渲染首屏；
+// 条目本身由浏览器请求 /data/items.json，避免整份数据重复塞进 HTML。
+const pool = JSON.parse(
+  readFileSync(new URL("../../public/data/items.json", import.meta.url), "utf-8"),
+) as PoolPayload;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>AInformer · 条目池</title>
+    <link rel="alternate" type="application/rss+xml" title="AI 情报池" href="feed.xml" />
+    <script is:inline>
+      // 在样式表生效前定好主题，避免亮色用户看到暗色闪一下
+      (function () {
+        try {
+          var saved = localStorage.getItem("ainformer.theme");
+          if (saved === "light" || saved === "dark") {
+            document.documentElement.dataset.theme = saved;
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <PoolApp client:load stats={pool.stats} windowDays={pool.window_days} initialItems={pool.items.slice(0, 24)} />
+  </body>
+</html>

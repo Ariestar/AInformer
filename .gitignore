@@ -3,10 +3,13 @@ data/*.json
 data/*.jsonl
 data/*.log
 
-# ── 站点产物：由 build_site.py / build_feed.py 生成 ──
-# 需要把页面本身也纳入版本时，删掉下面两行即可
+# ── 站点产物：由 web/ 构建与 build_feed.py 生成 ──────
+# 需要把页面本身也纳入版本时，删掉下面一行即可
 out/*
-!out/.gitkeep
+
+# ── 前端 ──────────────────────────────────────────
+web/.astro/
+web/public/data/
 
 # ── 依赖与缓存 ──────────────────────────────────
 node_modules/

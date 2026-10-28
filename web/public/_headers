@@ -2,5 +2,11 @@
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=600
 
+/data/items.json
+  Cache-Control: public, max-age=600
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /index.html
   Cache-Control: public, max-age=60

@@ -1,0 +1,47 @@
+import type { Item } from "../lib/types";
+import { fmtDate } from "../lib/format";
+
+interface Props {
+  items: Item[];
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+}
+
+export default function ItemList({ items, selected, onToggle }: Props) {
+  return (
+    <div className="list">
+      {items.length === 0 ? (
+        <div className="empty">没有匹配的条目。换个关键词，或关掉筛选条件。</div>
+      ) : (
+        items.map((it) => {
+          const on = selected.has(it.id);
+          return (
+            <div className={on ? "row sel" : "row"} key={it.id}>
+              <button
+                className={on ? "ck on" : "ck"}
+                type="button"
+                role="checkbox"
+                aria-checked={on}
+                aria-label={`选中：${it.title}`}
+                onClick={() => onToggle(it.id)}
+              />
+              <div className={`src ${it.tier}`} title={it.source_name}>
+                {it.source_name}
+              </div>
+              <div className="t">
+                <a className="ti" href={it.url} target="_blank" rel="noopener">
+                  {it.title}
+                </a>
+                {it.summary ? <div className="sm">{it.summary}</div> : null}
+              </div>
+              <div className={it.published ? "d" : "d none"}>{fmtDate(it.published)}</div>
+              <a className="ext" href={it.url} target="_blank" rel="noopener" aria-label="打开原文">
+                ↗
+              </a>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
