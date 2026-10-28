@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-10-28T00:00:00+00:00",
+  "window_days": 7,
+  "cutoff": "2026-10-21T00:00:00+00:00",
+  "stats": {
+    "sources_total": 3,
+    "sources_ok": 3,
+    "raw_items": 3,
+    "after_dedup": 3
+  },
+  "sources": [
+    { "id": "fixture_official", "name": "Fixture Official", "ok": true, "fetched": 1, "kept": 1, "error": null },
+    { "id": "fixture_media", "name": "Fixture Media", "ok": true, "fetched": 1, "kept": 1, "error": null },
+    { "id": "fixture_agg", "name": "Fixture Aggregator", "ok": true, "fetched": 1, "kept": 1, "error": null }
+  ],
+  "items": [
+    {
+      "source_id": "fixture_official",
+      "source_name": "Fixture Official",
+      "tier": "official",
+      "weight": 1.0,
+      "title": "Fixture official release",
+      "url": "https://example.com/official-1",
+      "published": "2026-10-27T08:00:00+00:00",
+      "summary": "First-party announcement used by CI to render the site.",
+      "fetched_at": "2026-10-28T00:00:00+00:00"
+    },
+    {
+      "source_id": "fixture_media",
+      "source_name": "Fixture Media",
+      "tier": "media",
+      "weight": 0.7,
+      "title": "Fixture media coverage",
+      "url": "https://example.com/media-1",
+      "published": "2026-10-26T08:00:00+00:00",
+      "summary": "Secondary reporting used by CI to render the site.",
+      "fetched_at": "2026-10-28T00:00:00+00:00"
+    },
+    {
+      "source_id": "fixture_agg",
+      "source_name": "Fixture Aggregator",
+      "tier": "aggregator",
+      "weight": 0.6,
+      "title": "Fixture aggregated item without a date",
+      "url": "https://example.com/aggregator-1",
+      "published": null,
+      "summary": "Undated entry so CI also covers the missing-date branch.",
+      "fetched_at": "2026-10-28T00:00:00+00:00"
+    }
+  ]
+}
