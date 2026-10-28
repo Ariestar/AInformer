@@ -52,9 +52,19 @@ jobs:
       - name: build feed
         run: uv run python bin/build_feed.py --base-url "$AINFORMER_BASE_URL"
 
+      - name: verify credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CF_TOKEN" || { echo "::error::CLOUDFLARE_API_TOKEN is empty"; exit 1; }
+          test -n "$CF_ACCOUNT" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is empty"; exit 1; }
+          echo "token length ${#CF_TOKEN}, account ${CF_ACCOUNT:0:8}..."
+
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
           packageManager: bun
           command: pages deploy out --project-name ainformer --branch main
