@@ -25,7 +25,14 @@ jobs:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
-      AINFORMER_BASE_URL: ${{ vars.AINFORMER_BASE_URL || 'https://ainformer.pages.dev' }}
+      # 全部来自仓库 secrets，由 `gh secret set --env-file .env` 从本地 .env 同步。
+      # 缺失时 config.py 会用默认值；AINFORMER_BASE_URL 缺失则构建直接失败。
+      AINFORMER_BASE_URL: ${{ secrets.AINFORMER_BASE_URL }}
+      AINFORMER_SITE_NAME: ${{ secrets.AINFORMER_SITE_NAME }}
+      AINFORMER_SITE_DESC: ${{ secrets.AINFORMER_SITE_DESC }}
+      AINFORMER_FEED_LIMIT: ${{ secrets.AINFORMER_FEED_LIMIT }}
+      AINFORMER_FEED_PER_SOURCE: ${{ secrets.AINFORMER_FEED_PER_SOURCE }}
+      AINFORMER_USER_AGENT: ${{ secrets.AINFORMER_USER_AGENT }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -67,4 +74,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
           packageManager: bun
-          command: pages deploy out --project-name ainformer --branch main
+          # 项目名不在这里写死，由 wrangler.toml 的 name 决定
+          command: pages deploy out --branch main
