@@ -11,6 +11,7 @@
 schema 是唯一契约。字段少了、类型错了，这里当场报错退出，
 而不是让浏览器在运行时拿到 undefined 再静默崩掉。
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,7 +24,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ITEMS_PATH = ROOT / "data" / "items.json"
 SCHEMA_PATH = ROOT / "schema" / "pool.schema.json"
-OUT_PATH = ROOT / "web" / "public" / "data" / "items.json"
+# 构建期用 src/data（走 Astro 的模块图），运行期用 public/data（浏览器 fetch）。
+# 同一份数据两个去处，内容必须一致，所以只在 write 时复制，不做二次加工。
+SRC_OUT = ROOT / "web" / "src" / "data" / "items.json"
+PUBLIC_OUT = ROOT / "web" / "public" / "data" / "items.json"
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -35,9 +39,22 @@ DATE_TIME = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
 # 只实现本项目 schema 用到的关键字。多一个不支持的关键字就报错，
 # 避免 schema 里写了校验器看不懂的约束、却以为已经生效。
 SUPPORTED = {
-    "type", "required", "properties", "items", "enum", "minLength",
-    "minimum", "maximum", "format", "additionalProperties", "$ref", "$defs",
-    "$schema", "$id", "title", "description",
+    "type",
+    "required",
+    "properties",
+    "items",
+    "enum",
+    "minLength",
+    "minimum",
+    "maximum",
+    "format",
+    "additionalProperties",
+    "$ref",
+    "$defs",
+    "$schema",
+    "$id",
+    "title",
+    "description",
 }
 
 TYPE_MAP = {
@@ -140,18 +157,20 @@ def cluster_id(title: str) -> str:
 def to_export(raw: dict) -> dict:
     items = []
     for it in raw["items"]:
-        items.append({
-            "id": item_id(it["url"]),
-            "source_id": it["source_id"],
-            "source_name": it["source_name"],
-            "tier": it.get("tier", "media"),
-            "title": it["title"],
-            "url": it["url"],
-            "published": it.get("published"),
-            "summary": it.get("summary", ""),
-            "cluster_id": cluster_id(it["title"]),
-            "weight": float(it.get("weight", 0.5)),
-        })
+        items.append(
+            {
+                "id": item_id(it["url"]),
+                "source_id": it["source_id"],
+                "source_name": it["source_name"],
+                "tier": it.get("tier", "media"),
+                "title": it["title"],
+                "url": it["url"],
+                "published": it.get("published"),
+                "summary": it.get("summary", ""),
+                "cluster_id": cluster_id(it["title"]),
+                "weight": float(it.get("weight", 0.5)),
+            }
+        )
 
     return {
         "generated_at": raw["generated_at"],
@@ -164,7 +183,6 @@ def to_export(raw: dict) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description="校验并导出前端数据契约")
     ap.add_argument("--in", dest="src", default=str(ITEMS_PATH))
-    ap.add_argument("--out", dest="dst", default=str(OUT_PATH))
     ap.add_argument("--schema", default=str(SCHEMA_PATH))
     args = ap.parse_args()
 
@@ -187,9 +205,10 @@ def main() -> int:
         print("未写入任何文件。", file=sys.stderr)
         return 2
 
-    dst = Path(args.dst)
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    dst.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    for dst in (SRC_OUT, PUBLIC_OUT):
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_text(text, encoding="utf-8")
 
     clusters = len({i["cluster_id"] for i in payload["items"]})
     tiers: dict[str, int] = {}
@@ -198,7 +217,10 @@ def main() -> int:
 
     print(f"契约校验通过：{len(payload['items'])} 条 / {clusters} 个事件簇")
     print("  层级 " + "、".join(f"{k} {v}" for k, v in sorted(tiers.items())))
-    print(f"写入 {dst.relative_to(ROOT)}（{dst.stat().st_size / 1024:.0f} KB）")
+    print(
+        f"写入 {SRC_OUT.relative_to(ROOT)}、{PUBLIC_OUT.relative_to(ROOT)}"
+        f"（各 {len(text.encode('utf-8')) / 1024:.0f} KB）"
+    )
     return 0
 
 
