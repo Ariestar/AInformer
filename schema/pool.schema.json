@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ainformer.pages.dev/schema/pool.schema.json",
+  "title": "AInformer item pool export",
+  "description": "前端消费的条目池契约。抓取层与 UI 之间的唯一边界，字段变更必须同时改这里和 web/src/lib/types.ts。",
+  "type": "object",
+  "required": ["generated_at", "window_days", "stats", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "generated_at": { "type": "string", "format": "date-time" },
+    "window_days": { "type": "integer", "minimum": 1 },
+    "stats": { "$ref": "#/$defs/stats" },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/item" }
+    }
+  },
+  "$defs": {
+    "stats": {
+      "type": "object",
+      "required": ["sources_total", "sources_ok", "raw_items", "after_dedup"],
+      "additionalProperties": false,
+      "properties": {
+        "sources_total": { "type": "integer", "minimum": 0 },
+        "sources_ok": { "type": "integer", "minimum": 0 },
+        "raw_items": { "type": "integer", "minimum": 0 },
+        "after_dedup": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": [
+        "id",
+        "source_id",
+        "source_name",
+        "tier",
+        "title",
+        "url",
+        "published",
+        "summary",
+        "cluster_id",
+        "weight"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 8,
+          "description": "由 url 派生的稳定标识，用作前端 key 与勾选持久化键"
+        },
+        "source_id": { "type": "string", "minLength": 1 },
+        "source_name": { "type": "string", "minLength": 1 },
+        "tier": { "enum": ["official", "media", "aggregator"] },
+        "title": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "minLength": 8 },
+        "published": { "type": ["string", "null"] },
+        "summary": { "type": "string" },
+        "cluster_id": {
+          "type": "string",
+          "minLength": 4,
+          "description": "同一事件（标题指纹相同）共享同一个 cluster_id，前端据此展示旁证"
+        },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}
