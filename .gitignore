@@ -1,0 +1,20 @@
+# ── 机器产物：每次运行都会重建，不入库 ──────────────
+data/*.json
+data/*.jsonl
+data/*.log
+
+# ── 站点产物：由 build_site.py / build_feed.py 生成 ──
+# 需要把页面本身也纳入版本时，删掉下面两行即可
+out/*
+!out/.gitkeep
+
+# ── 依赖与缓存 ──────────────────────────────────
+node_modules/
+.wrangler/
+__pycache__/
+*.py[cod]
+
+# ── 系统杂项 ────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

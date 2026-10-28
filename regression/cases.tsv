@@ -1,0 +1,27 @@
+﻿source	title	label	reason
+openai_news	OpenAI models are coming to Google Cloud	KEEP	采购路径变化，影响云与模型决策
+openai_news	ChatGPT Ads expands to 26 new countries	KEEP	渠道与信息环境变化
+openai_news	Uber brings ChatGPT Work to all employees	KEEP	全员铺开的参考样本
+openai_news	OpenAI and Poland's NASK partner on AI safety	DROP	合作类，不改变本周动作
+openai_news	Build more responsive apps with the Decisions API	DROP	开发者接口细节，非职场通用
+openai_news	What FDE means at OpenAI	DROP	组织与岗位介绍
+openai_news	How AT&T is rethinking in-house legal work	DROP	客户案例，与 Uber 同类只取一
+openai_news	Franchisee reconciles cash in 94% less time	DROP	客户案例，与 Uber 同类只取一
+openai_news	Terminal X matches senior investor judgment 88.6%	DROP	厂商自测跑分，无独立验证
+openai_news	Broad access through consistent standards	DROP	政策立场文，无具体动作
+github_changelog	Global default for Copilot features generally available	KEEP	权限默认值变化，管理员须决策
+github_changelog	Custom skills, agents, and MCP servers in usage metrics API	MERGE	并入上一条，同属管理员视角
+github_changelog	Industry comparisons in the Copilot impact dashboard	DROP	需 opt-in，当前影响面小
+github_changelog	Pull requests: Saved whitespace preferences	DROP	纯界面细节
+github_changelog	Meta API endpoints updated for Actions blob storage	DROP	技术细节，非办公场景
+github_changelog	GitHub Copilot in Visual Studio — September update	DROP	月度汇总贴，无单一可报道事件
+hf_blog	OlmoEarth v1.3: embeddings for the whole planet	DROP	领域模型，与办公无关
+hf_blog	Granite Speech 5.0	DROP	领域模型，与办公无关
+hf_blog	Specializing the Vocabulary of SLMs cuts inference cost 77%	DROP	技术研究，无产品动作
+deepmind_blog	Beyond tree cover: mapping the world's forest types	DROP	科研内容，非办公
+google_ai_blog	Southeast Asia's digital economy to hit $368 billion	DROP	研究报告，非产品更新
+36kr	《国家信息化"十五五"规划》印发：加快构建全国一体化算力网	VERIFY	媒体源且无发布时间，核到官方原文后保留
+36kr	国家信息化"十五五"规划：做精做细芯片成熟制程	MERGE	同一事件的第 2 条，并入上一条
+36kr	机构今日买入宇树科技2.41亿元	DROP	资本市场消息
+36kr	爱玛科技：第三季度归母净利润同比下降36.86%	DROP	财报
+36kr	AI房产经纪人，第一单成交了	DROP	单一商业案例，无可核实数据

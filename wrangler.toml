@@ -1,0 +1,10 @@
+# Cloudflare Pages 项目配置
+#
+# 作用之一：把「项目根」锚定在本目录。
+# 否则 wrangler 会顺着目录往上找 package.json，可能解析到用户主目录的上一级，
+# 导致 EPERM mkdir 'C:\Users\.wrangler\tmp' 这类错误。
+# scaffold.py 会把 name 换成真实项目名。
+
+name = "ai-intel"
+pages_build_output_dir = "out"
+compatibility_date = "2026-10-23"

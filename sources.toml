@@ -1,0 +1,163 @@
+# 源清单 —— 唯一需要日常修改的文件
+# 只收有 RSS/Atom 的源。没有 feed 的一律不收，不做 HTML 抓取兼容。
+# 2026-10-23 实测全部 HTTP 200。
+
+version = 1
+
+[fetch]
+days = 7              # 默认时间窗（天）
+timeout = 20
+max_per_source = 60   # 单源上限，只防极端情况，不做筛选
+user_agent = "ai-intel/1.0"
+
+[filter]
+# 留空：抓取层不再替人做任何取舍。
+# 需要屏蔽某类消息时，在页面上的筛选框里操作，或在这里加关键词。
+blacklist = []
+
+# ── 官方源：一手事实 ──────────────────────────────
+[[source]]
+id = "openai_news"
+name = "OpenAI News"
+tier = "official"
+weight = 1.0
+url = "https://openai.com/news/rss.xml"
+
+[[source]]
+id = "google_ai_blog"
+name = "Google AI Blog"
+tier = "official"
+weight = 1.0
+url = "https://blog.google/technology/ai/rss/"
+
+[[source]]
+id = "deepmind_blog"
+name = "Google DeepMind"
+tier = "official"
+weight = 1.0
+url = "https://deepmind.google/blog/rss.xml"
+
+[[source]]
+id = "github_changelog"
+name = "GitHub Changelog"
+tier = "official"
+weight = 1.0
+url = "https://github.blog/changelog/feed/"
+
+[[source]]
+id = "hf_blog"
+name = "Hugging Face Blog"
+tier = "official"
+weight = 0.9
+url = "https://huggingface.co/blog/feed.xml"
+
+[[source]]
+id = "msra"
+name = "Microsoft Research"
+tier = "official"
+weight = 0.9
+# 微软研究院官方博客，含 MSRA 成果。英文，频率不高但单篇分量重。
+url = "https://www.microsoft.com/en-us/research/feed/"
+
+# ── 媒体源：只做交叉验证，不作事实依据 ────────────
+[[source]]
+id = "qbitai"
+name = "量子位"
+tier = "media"
+weight = 0.7
+# 「AI 三大刊」里唯一提供原生 RSS 的一家。机器之心、新智元都没有，见 runbook 的源审计表。
+url = "https://www.qbitai.com/feed"
+
+# ── 聚合源：二手精选，只作线索，不作事实依据 ──────
+# 它们本身就是对官方源和社交媒体的转述与筛选，信息增量有限，
+# 但能补上你的源清单里没有的东西：X/KOL、国内媒体、中文语境下的取舍。
+# 代价是重复度会明显上升 —— 这是 triage.py 的重复簇要解决的问题。
+
+[[source]]
+id = "aihot"
+name = "AIHOT"
+tier = "aggregator"
+weight = 0.6
+# 注意：原域名 aihot.virxact.com 已废弃，旧地址 2026-10 起停用。
+# 旧 feed 里会留一条换域名通知，那是历史条目，不是新内容。
+url = "https://aihot.news/rss.xml"
+
+[[source]]
+id = "juya_daily"
+name = "橘鸦AI早报"
+tier = "aggregator"
+weight = 0.6
+# 粒度特殊：一天一期日报，一期 = 一条 feed item，不是单条新闻。
+# 所以条目数永远很少（约 10 条 = 10 天），但每条背后是当天几十条资讯。
+# 当线索源用：看到值得追的，点进去再找原始出处。
+url = "https://daily.juya.uk/rss.xml"
+
+# ── 公众号（经 wechat2rss 转换） ──────────────────
+# 公众号没有官方 RSS，这些地址来自 BestBlogs 维护的 wechat2rss 实例，
+# OPML 清单：github.com/ginobefun/BestBlogs/blob/main/opml/bestblogs_wechat2rss_opml_all.opml
+# （共 375 个号，含 AI 前线、AI 科技评论等，需要时从里面加）
+#
+# 内容本身是一手的（这些号自己采写），所以 tier 仍是 media；
+# 但传输层是第三方转换，**转换器挂了是静默的** —— 表现为源长期零新增。
+# health.py 的"连续 3 次零新增"就是为这种情况准备的，别把它当误报。
+# 每个 feed 只给最近 10 篇，且内嵌全文 HTML（单个 0.3–1.6 MB），抓取会慢一些。
+
+[[source]]
+id = "jiqizhixin"
+name = "机器之心"
+tier = "media"
+weight = 0.8
+# 官网 /rss 已改成"数据服务"招商页，不是 feed。只能用转换地址。
+url = "https://wechat2rss.bestblogs.dev/feed/2f520471856d56c7b3a95cd09eb777149b32828a.xml"
+
+[[source]]
+id = "xinzhiyuan"
+name = "新智元"
+tier = "media"
+weight = 0.75
+url = "https://wechat2rss.bestblogs.dev/feed/e531a18b21c34cf787b83ab444eef659d7a980de.xml"
+
+[[source]]
+id = "paperweekly"
+name = "PaperWeekly"
+tier = "media"
+weight = 0.75
+# 官网 paperweekly.site / .com 域名均已无法解析，只能用转换地址。
+url = "https://wechat2rss.bestblogs.dev/feed/0120e999fc95e098c74bd5482a2a4c8407c42c38.xml"
+
+[[source]]
+id = "datawhale"
+name = "Datawhale"
+tier = "media"
+weight = 0.65
+url = "https://wechat2rss.bestblogs.dev/feed/ea0dd8bddfe4fbfb32eaa81a1e1b628d45e97a80.xml"
+
+[[source]]
+id = "kazike"
+name = "数字生命卡兹克"
+tier = "media"
+weight = 0.6
+# 个人号，观点为主，不是事实依据。他也是 AIHOT 的作者。
+url = "https://wechat2rss.bestblogs.dev/feed/ff621c3e98d6ae6fceb3397e57441ffc6ea3c17f.xml"
+
+[[source]]
+id = "cyberzen"
+name = "赛博禅心"
+tier = "media"
+weight = 0.55
+url = "https://wechat2rss.bestblogs.dev/feed/752c31ca0446b837339463fc5440539e20267d2f.xml"
+
+[[source]]
+id = "bytedance_tech"
+name = "字节跳动技术团队"
+tier = "media"
+weight = 0.7
+# 实测最后更新 2026-08-05，已超 30 天。health.py 会报"可能已停更"，这是真实情况，不是误报。
+url = "https://wechat2rss.bestblogs.dev/feed/6efd40bb335d2037f365d284cb5e00f0843e737e.xml"
+
+[[source]]
+id = "tencent_tech"
+name = "腾讯技术工程"
+tier = "media"
+weight = 0.7
+url = "https://wechat2rss.bestblogs.dev/feed/1e0ac39f8952b2e7f0807313cf2633d25078a171.xml"
