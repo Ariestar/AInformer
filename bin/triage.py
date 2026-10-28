@@ -114,7 +114,7 @@ def _post(body: dict, api_key: str) -> dict:
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
-                "User-Agent": "ai-intel-triage/2.0",
+                "User-Agent": "ainformer-triage/2.0",
             },
         )
         try:

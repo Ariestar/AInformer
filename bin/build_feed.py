@@ -8,7 +8,7 @@ out/ 里同时有 index.html 和 feed.xml —— **整个目录就是一个可�
 扔到 Cloudflare Pages / 任意静态托管就能被订阅。
 
 用法：
-    export AI_INTEL_BASE_URL=https://your-site.pages.dev
+    export AINFORMER_BASE_URL=https://your-site.pages.dev
     uv run python bin/build_feed.py
     uv run python bin/build_feed.py --limit 100
     uv run python bin/build_feed.py --days 3
@@ -43,11 +43,11 @@ ITEMS_PATH = ROOT / "data" / "items.json"
 OUT_PATH = ROOT / "out" / "feed.xml"
 
 DEFAULT_TITLE = "AI 情报池"
-DEFAULT_DESC = "由 ai-intel 从多个一手源与中文源聚合而成。不做重要性筛选，只按时间排序。"
+DEFAULT_DESC = "由 AInformer 从多个一手源与中文源聚合而成。不做重要性筛选，只按时间排序。"
 
 # 线上地址不写死：atom:link self 必须指向真实部署地址，
 # 猜错一次订阅器就拿到错的 URL。由 --base-url 或环境变量提供，缺了直接报错。
-BASE_URL_ENV = "AI_INTEL_BASE_URL"
+BASE_URL_ENV = "AINFORMER_BASE_URL"
 
 
 def _pub_dt(item: dict) -> datetime | None:
@@ -72,7 +72,7 @@ def build(items: list[dict], *, title: str, link: str, desc: str, limit: int) ->
         f"<description>{escape(desc)}</description>",
         "<language>zh-CN</language>",
         f"<lastBuildDate>{format_datetime(now)}</lastBuildDate>",
-        "<generator>ai-intel build_feed.py</generator>",
+        "<generator>ainformer build_feed.py</generator>",
         f'<atom:link href="{escape(link.rstrip("/") + "/feed.xml")}" '
         'rel="self" type="application/rss+xml"/>',
     ]

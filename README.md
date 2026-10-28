@@ -1,4 +1,4 @@
-# ai-intel
+# AInformer
 
 AI 行业情报系统：多源抓取 → 事实标注 → 单页站点 + RSS。
 
@@ -24,7 +24,7 @@ AI 行业情报系统：多源抓取 → 事实标注 → 单页站点 + RSS。
 ```bash
 uv sync
 
-export AI_INTEL_BASE_URL=https://your-site.pages.dev
+export AINFORMER_BASE_URL=https://your-site.pages.dev
 
 uv run python bin/fetch.py
 uv run python bin/build_site.py
@@ -50,7 +50,7 @@ uv run python bin/build_feed.py
 
 | 变量 | 必填 | 说明 |
 |---|---|---|
-| `AI_INTEL_BASE_URL` | 是 | 站点根地址。feed 的 `atom:link self` 依赖它，**没有默认值**，缺了直接退出码 2 |
+| `AINFORMER_BASE_URL` | 是 | 站点根地址。feed 的 `atom:link self` 依赖它，**没有默认值**，缺了直接退出码 2 |
 | `TYPESAFE_API_KEY` | 否 | 只有跑 `bin/triage.py` 时需要 |
 
 ## 部署

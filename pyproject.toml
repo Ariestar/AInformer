@@ -1,5 +1,5 @@
 [project]
-name = "ai-intel"
+name = "ainformer"
 version = "0.1.0"
 description = "AI 行业情报系统：多源抓取 → 判断 → 静态站点 + RSS"
 requires-python = ">=3.11"

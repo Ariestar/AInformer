@@ -8,7 +8,7 @@ version = 1
 days = 7              # 默认时间窗（天）
 timeout = 20
 max_per_source = 60   # 单源上限，只防极端情况，不做筛选
-user_agent = "ai-intel/1.0"
+user_agent = "ainformer/1.0"
 
 [filter]
 # 留空：抓取层不再替人做任何取舍。

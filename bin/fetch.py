@@ -144,7 +144,7 @@ def main() -> int:
     fc = cfg.get("fetch", {})
     days = args.days if args.days is not None else fc.get("days", 5)
     timeout = fc.get("timeout", 20)
-    ua = fc.get("user_agent", "ai-intel/1.0")
+    ua = fc.get("user_agent", "ainformer/1.0")
     cap = fc.get("max_per_source", 15)
     blacklist = [w.lower() for w in cfg.get("filter", {}).get("blacklist", [])]
 

@@ -5,6 +5,6 @@
 # 导致 EPERM mkdir 'C:\Users\.wrangler\tmp' 这类错误。
 # name 同时是部署的默认项目名；publish.py 的 --project 可覆盖。
 
-name = "ai-intel"
+name = "ainformer"
 pages_build_output_dir = "out"
 compatibility_date = "2026-10-23"

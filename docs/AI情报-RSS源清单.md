@@ -120,7 +120,7 @@ source / tier / published / url）。按以下规则整理成一份简报。
 ```bash
 uv sync                                   # 首次：按 pyproject.toml 建 .venv
 
-export AI_INTEL_BASE_URL=https://ai-intel-63f.pages.dev
+export AINFORMER_BASE_URL=https://ainformer.pages.dev
 
 uv run python bin/fetch.py            # 抓取 → data/items.json
 uv run python bin/triage.py           # 判断 → data/triage.json（需 TYPESAFE_API_KEY）
@@ -129,7 +129,7 @@ uv run python bin/build_feed.py       # → out/feed.xml
 uv run python bin/publish.py          # 一条命令跑完上面全部 + 部署
 ```
 
-**站点地址不写死在代码里。** `AI_INTEL_BASE_URL` 没有默认值：feed 的
+**站点地址不写死在代码里。** `AINFORMER_BASE_URL` 没有默认值：feed 的
 `atom:link self` 必须指向真实地址，缺了这个变量 `build_feed.py` 直接退出码 2。
 `publish.py` 也认 `--base-url`，优先级高于环境变量。
 
@@ -137,8 +137,10 @@ uv run python bin/publish.py          # 一条命令跑完上面全部 + 部署
 走 `uv run python bin/publish.py --no-triage` 跳过判断层，其余照常。
 
 **线上地址**
-- 站点 https://ai-intel-63f.pages.dev
-- RSS https://ai-intel-63f.pages.dev/feed.xml
+
+Cloudflare Pages 项目名是 `ainformer`，首次部署后地址为
+`https://ainformer.pages.dev`（以部署输出为准），RSS 在同域 `/feed.xml`。
+旧的 `ai-intel-63f.pages.dev` 随项目改名已停用，订阅者需要换源。
 
 **静态配置**：Cloudflare 的 `_headers`（CORS、缓存）在 `static/_headers`，
 `build_site.py` 每次构建都会把它同步进 `out/`。`out/` 不入库，别往里面手写东西。

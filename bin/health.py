@@ -38,7 +38,7 @@ def main() -> int:
     cfg = load_config()
     fc = cfg.get("fetch", {})
     timeout = fc.get("timeout", 20)
-    ua = fc.get("user_agent", "ai-intel/1.0")
+    ua = fc.get("user_agent", "ainformer/1.0")
     now = datetime.now(timezone.utc)
     history = load_history()
 

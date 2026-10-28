@@ -327,7 +327,7 @@ function exportMd() {
   var items = selectedItems();
   if (!items.length) { alert('还没有选任何条目'); return; }
   var lines = ['# AI 情报简报（自选 ' + items.length + ' 条）', '',
-    '> 由 ai-intel 生成，筛选由人完成。', ''];
+    '> 由 AInformer 生成，筛选由人完成。', ''];
   items.forEach(function (it, k) {
     lines.push('## ' + (k + 1) + '. ' + it.title, '');
     lines.push('- 来源：' + it.source_name + '（' + tierName(it.tier, true) + '）');
@@ -438,7 +438,7 @@ def build() -> Path:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>ai-intel · 条目池</title>
+<title>AInformer · 条目池</title>
 <link rel="alternate" type="application/rss+xml" title="AI 情报池" href="feed.xml">
 <style>{CSS}</style>
 </head>
@@ -446,7 +446,7 @@ def build() -> Path:
 
 <div class="topbar"><div class="inner">
   <div class="logo"></div>
-  <span class="brand">ai-intel <span>/ 条目池</span></span>
+  <span class="brand">AInformer <span>/ 条目池</span></span>
   <div class="seg">
     <button id="mPool" class="on" aria-pressed="true">条目池 <span class="cnt" id="total">{len(items)}</span></button>
     <button id="mBrief" aria-pressed="false">我的简报 <span class="cnt" id="selCount">0</span></button>

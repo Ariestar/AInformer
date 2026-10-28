@@ -3,7 +3,7 @@
 """publish.py —— 一条命令跑完「抓取 → 建站 → 生成 feed → 部署」
 
 用法：
-    export AI_INTEL_BASE_URL=https://your-site.pages.dev
+    export AINFORMER_BASE_URL=https://your-site.pages.dev
     uv run python bin/publish.py          # 全跑，最后部署到 Cloudflare Pages
     uv run python bin/publish.py --no-deploy   # 只重建 out/，不部署
     uv run python bin/publish.py --no-triage   # 跳过 Jev 判断层
@@ -31,7 +31,7 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = Path(__file__).resolve().parent.parent
 BIN = ROOT / "bin"
 OUT = ROOT / "out"
-BASE_URL_ENV = "AI_INTEL_BASE_URL"
+BASE_URL_ENV = "AINFORMER_BASE_URL"
 
 
 def run(label: str, cmd: list[str], cwd: Path = ROOT) -> None:
