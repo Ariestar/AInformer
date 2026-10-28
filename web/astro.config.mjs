@@ -1,5 +1,5 @@
-import { resolve } from "node:path";
 import { rm } from "node:fs/promises";
+import { resolve } from "node:path";
 import react from "@astrojs/react";
 import { defineConfig } from "astro/config";
 import { loadEnv } from "vite";
