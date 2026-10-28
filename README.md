@@ -80,8 +80,9 @@ Biome 不处理 `.astro` 文件，那部分由 `astro check` 覆盖。
 ## 自动化
 
 `.github/workflows/ci.yml` 在 push 和 PR 上跑 lint、类型检查、测试与一次 fixture 构建，
-不依赖外网源是否可用。`.github/workflows/deploy.yml` 在 main 推送、每天 22:00 UTC
-的定时任务以及手动触发时抓取并部署到 Cloudflare Pages。
+不依赖外网源是否可用。`.github/workflows/deploy.yml` **不在 push 时直接部署**：
+它监听 `ci` 的完成事件，只有 main 上的 CI 结论为成功才继续抓取并部署；此外
+每天 22:00 UTC 的定时任务和手动触发也会部署。
 
 部署需要两个仓库 secret：
 

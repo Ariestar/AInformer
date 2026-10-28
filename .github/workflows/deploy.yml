@@ -1,7 +1,10 @@
 name: deploy
 
 on:
-  push:
+  # 不在 push 上直接部署：等 ci 跑完再看结果，只有成功才继续
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
     branches: [main]
   # 每天 22:00 UTC（北京时间 06:00）抓一轮，站点不依赖本地机器
   schedule:
@@ -18,11 +21,16 @@ concurrency:
 
 jobs:
   deploy:
+    # 定时与手动触发没有上游 run，直接跑；workflow_run 则要求 ci 成功
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
       AINFORMER_BASE_URL: ${{ vars.AINFORMER_BASE_URL || 'https://ainformer.pages.dev' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # workflow_run 触发时默认检出的是默认分支最新提交，不一定是刚过 CI 的那个
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
