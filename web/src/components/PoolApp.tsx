@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Item, Stats, ViewMode } from "../lib/types";
-import { filterItems, initialFilter, sourceOptions, type FilterState } from "../lib/select";
 import { fmtDate, tierName } from "../lib/format";
-import TopBar from "./TopBar";
+import { type FilterState, filterItems, initialFilter, sourceOptions } from "../lib/select";
+import type { Item, Stats, ViewMode } from "../lib/types";
+import BriefView from "./BriefView";
+import ItemList from "./ItemList";
 import StatsStrip from "./StatsStrip";
 import Toolbar from "./Toolbar";
-import ItemList from "./ItemList";
-import BriefView from "./BriefView";
+import TopBar from "./TopBar";
 
 // 勾选以条目的稳定 id 为键。
 const SEL_KEY = "ainformer.selection.v1";
@@ -120,11 +120,14 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   }, [mode, selectedItems.length]);
 
   function exportMarkdown() {
-    if (selectedItems.length === 0) {
-      alert("还没有选任何条目");
-      return;
-    }
-    const lines = [`# AI 情报简报（自选 ${selectedItems.length} 条）`, "", "> 由 AInformer 生成，筛选由人完成。", ""];
+    // 没勾选时按钮本身就是 disabled，这里只是防御性返回
+    if (selectedItems.length === 0) return;
+    const lines = [
+      `# AI 情报简报（自选 ${selectedItems.length} 条）`,
+      "",
+      "> 由 AInformer 生成，筛选由人完成。",
+      "",
+    ];
     selectedItems.forEach((it, k) => {
       lines.push(`## ${k + 1}. ${it.title}`, "");
       lines.push(`- 来源：${it.source_name}（${tierName(it.tier, true)}）`);
@@ -163,11 +166,14 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
             <Toolbar
               filter={filter}
               sources={sources}
+              selectedCount={selected.size}
               onChange={setFilter}
               onSelectVisible={() =>
                 setSelected((prev) => {
                   const next = new Set(prev);
-                  visible.forEach((it) => next.add(it.id));
+                  visible.forEach((it) => {
+                    next.add(it.id);
+                  });
                   return next;
                 })
               }
@@ -176,7 +182,10 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
             />
             <ItemList items={visible} selected={selected} onToggle={toggle} />
             {loadError ? (
-              <div className="empty">完整列表加载失败（{loadError}），当前仅显示构建期保留的 {initialItems.length} 条。刷新重试。</div>
+              <div className="empty">
+                完整列表加载失败（{loadError}），当前仅显示构建期保留的 {initialItems.length}{" "}
+                条。刷新重试。
+              </div>
             ) : null}
           </>
         ) : (

@@ -4,13 +4,22 @@ import type { SortKey } from "../lib/types";
 interface Props {
   filter: FilterState;
   sources: Array<{ id: string; name: string }>;
+  selectedCount: number;
   onChange: (next: FilterState) => void;
   onSelectVisible: () => void;
   onClear: () => void;
   onExport: () => void;
 }
 
-export default function Toolbar({ filter, sources, onChange, onSelectVisible, onClear, onExport }: Props) {
+export default function Toolbar({
+  filter,
+  sources,
+  selectedCount,
+  onChange,
+  onSelectVisible,
+  onClear,
+  onExport,
+}: Props) {
   return (
     <div className="bar">
       <input
@@ -66,7 +75,13 @@ export default function Toolbar({ filter, sources, onChange, onSelectVisible, on
       <button className="btn" type="button" onClick={onClear}>
         清空
       </button>
-      <button className="btn primary" type="button" onClick={onExport}>
+      <button
+        className="btn primary"
+        type="button"
+        onClick={onExport}
+        disabled={selectedCount === 0}
+        title={selectedCount === 0 ? "先勾选条目" : undefined}
+      >
         导出 Markdown
       </button>
     </div>
