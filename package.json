@@ -1,9 +1,0 @@
-{
-  "name": "ainformer",
-  "version": "0.1.0",
-  "private": true,
-  "description": "AI 行业情报系统：多源抓取 → 判断 → 静态站点 + RSS",
-  "scripts": {
-    "deploy": "bunx wrangler@4 pages deploy"
-  }
-}
