@@ -17,6 +17,8 @@ node_modules/
 .wrangler/
 .venv/
 __pycache__/
+.pytest_cache/
+.ruff_cache/
 *.py[cod]
 
 # ── 系统杂项 ────────────────────────────────────

@@ -345,8 +345,6 @@ select {
 }
 .ck {
   appearance: none;
-  -webkit-appearance: none;
-  position: relative;
   width: 16px;
   height: 16px;
   margin: 2px 0 0;
