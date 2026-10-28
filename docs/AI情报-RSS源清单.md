@@ -71,7 +71,7 @@
 
 # 简报出稿提示词
 
-给模型直接用的完整版。配套结构见 `templates/briefing.md`。
+给模型直接用的完整版。
 
 ```
 你是 AI 行业情报编辑。下面是今天抓到的条目（JSON，含 title / summary /
@@ -115,22 +115,33 @@ source / tier / published / url）。按以下规则整理成一份简报。
 
 # 怎么跑
 
-```bash
-cd ai-intel
+依赖交给 uv，Python 需 ≥ 3.11（`tomllib` 从 3.11 才有）。
 
-python bin/fetch.py            # 抓取 → data/items.json
-python bin/triage.py           # 判断 → data/triage.json（需 TYPESAFE_API_KEY）
-python bin/build_site.py       # → out/index.html
-python bin/build_feed.py       # → out/feed.xml
-python bin/publish.py          # 一条命令跑完上面全部 + 部署
+```bash
+uv sync                                   # 首次：按 pyproject.toml 建 .venv
+
+export AI_INTEL_BASE_URL=https://ai-intel-63f.pages.dev
+
+uv run python bin/fetch.py            # 抓取 → data/items.json
+uv run python bin/triage.py           # 判断 → data/triage.json（需 TYPESAFE_API_KEY）
+uv run python bin/build_site.py       # → out/index.html
+uv run python bin/build_feed.py       # → out/feed.xml
+uv run python bin/publish.py          # 一条命令跑完上面全部 + 部署
 ```
 
+**站点地址不写死在代码里。** `AI_INTEL_BASE_URL` 没有默认值：feed 的
+`atom:link self` 必须指向真实地址，缺了这个变量 `build_feed.py` 直接退出码 2。
+`publish.py` 也认 `--base-url`，优先级高于环境变量。
+
 **没有 TYPESAFE_API_KEY 时**：`triage.py` 会退出码 2（这是故意的，不降级）。
-走 `python bin/publish.py --no-triage` 跳过判断层，其余照常。
+走 `uv run python bin/publish.py --no-triage` 跳过判断层，其余照常。
 
 **线上地址**
 - 站点 https://ai-intel-63f.pages.dev
 - RSS https://ai-intel-63f.pages.dev/feed.xml
+
+**静态配置**：Cloudflare 的 `_headers`（CORS、缓存）在 `static/_headers`，
+`build_site.py` 每次构建都会把它同步进 `out/`。`out/` 不入库，别往里面手写东西。
 
 **演示时的两个坑**
 - 用脚本探活会拿到 403，Cloudflare 拦 `Python-urllib` 的 UA，换浏览器 UA 即 200。订阅器不受影响
