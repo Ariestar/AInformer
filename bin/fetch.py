@@ -16,6 +16,7 @@ import tomllib
 import urllib.error
 import urllib.request
 import zlib
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from html import unescape
@@ -27,6 +28,10 @@ import config
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "sources.toml"
 DATA = ROOT / "data"
+
+# 抓取并发度：各源是独立 IO，线程池既避免串行等待，也防止瞬间打爆所有源。
+# 抓取逻辑零共享状态，故用线程（而非进程）足够，且保持零运行时依赖。
+MAX_WORKERS = 8
 
 ATOM = "{http://www.w3.org/2005/Atom}"
 NS = {
@@ -146,6 +151,48 @@ def load_config() -> dict:
         return tomllib.load(fh)
 
 
+def _fetch_source(src, *, cutoff, blacklist, timeout, ua, cap, now):
+    """抓取单个源并做窗口/黑名单过滤。线程安全：只读写自己的局部状态。"""
+    sid = src["id"]
+    rec = {"id": sid, "name": src["name"], "ok": False, "fetched": 0, "kept": 0, "error": None}
+    try:
+        blob = fetch_bytes(src["url"], timeout, ua)
+        entries = parse_feed(blob)
+        rec["ok"] = True
+        rec["fetched"] = len(entries)
+    except (urllib.error.URLError, urllib.error.HTTPError, ValueError, OSError) as exc:
+        rec["error"] = f"{type(exc).__name__}: {exc}"
+        return rec, []
+
+    kept_items: list[dict] = []
+    for e in entries:
+        if not e["title"] or not e["url"]:
+            continue
+        pub = e["published"]
+        if pub is not None and pub < cutoff:
+            continue
+        hay = (e["title"] + " " + e["summary"]).lower()
+        if any(w in hay for w in blacklist):
+            continue
+        if len(kept_items) >= cap:
+            break
+        kept_items.append(
+            {
+                "source_id": sid,
+                "source_name": src["name"],
+                "tier": src.get("tier", "media"),
+                "weight": src.get("weight", 0.5),
+                "title": e["title"],
+                "url": e["url"],
+                "published": pub.isoformat() if pub else None,
+                "summary": e["summary"][:400],
+                "fetched_at": now.isoformat(),
+            }
+        )
+    rec["kept"] = len(kept_items)
+    return rec, kept_items
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=int, default=None, help="覆盖 sources.toml 里的时间窗")
@@ -164,53 +211,37 @@ def main() -> int:
     now = datetime.now(UTC)
     cutoff = now - timedelta(days=days)
 
+    sources = cfg.get("source", [])
     items: list[dict] = []
     source_report: list[dict] = []
 
-    for src in cfg.get("source", []):
-        sid = src["id"]
-        rec = {"id": sid, "name": src["name"], "ok": False, "fetched": 0, "kept": 0, "error": None}
-        try:
-            blob = fetch_bytes(src["url"], timeout, ua)
-            entries = parse_feed(blob)
-            rec["ok"] = True
-            rec["fetched"] = len(entries)
-        except (urllib.error.URLError, urllib.error.HTTPError, ValueError, OSError) as exc:
-            rec["error"] = f"{type(exc).__name__}: {exc}"
-            source_report.append(rec)
-            print(f"[FAIL] {sid}: {rec['error']}", file=sys.stderr)
-            continue
-
-        kept = 0
-        for e in entries:
-            if not e["title"] or not e["url"]:
-                continue
-            pub = e["published"]
-            if pub is not None and pub < cutoff:
-                continue
-            hay = (e["title"] + " " + e["summary"]).lower()
-            if any(w in hay for w in blacklist):
-                continue
-            if kept >= cap:
-                break
-            kept += 1
-            items.append(
-                {
-                    "source_id": sid,
-                    "source_name": src["name"],
-                    "tier": src.get("tier", "media"),
-                    "weight": src.get("weight", 0.5),
-                    "title": e["title"],
-                    "url": e["url"],
-                    "published": pub.isoformat() if pub else None,
-                    "summary": e["summary"][:400],
-                    "fetched_at": now.isoformat(),
-                }
+    # 并发抓取：各源独立 IO，有界线程池既避免串行等待，也防止瞬间打爆所有源。
+    # 抓取逻辑零共享状态，结果按提交顺序收集以保持报表顺序稳定。
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
+        futures = [
+            ex.submit(
+                _fetch_source,
+                src,
+                cutoff=cutoff,
+                blacklist=blacklist,
+                timeout=timeout,
+                ua=ua,
+                cap=cap,
+                now=now,
             )
-        rec["kept"] = kept
-        source_report.append(rec)
-        flag = "ok  " if kept else "zero"
-        print(f"[{flag}] {sid:<16} 拉到 {rec['fetched']:>3} 条，窗口内保留 {kept:>2} 条")
+            for src in sources
+        ]
+        for src, fut in zip(sources, futures, strict=True):
+            rec, kept_items = fut.result()
+            source_report.append(rec)
+            items.extend(kept_items)
+            if rec["error"]:
+                print(f"[FAIL] {src['id']}: {rec['error']}", file=sys.stderr)
+            else:
+                flag = "ok  " if rec["kept"] else "zero"
+                print(
+                    f"[{flag}] {src['id']:<16} 拉到 {rec['fetched']:>3} 条，窗口内保留 {rec['kept']:>2} 条"
+                )
 
     # 去重：先按 URL，再按标题指纹
     seen_url, seen_title, deduped = set(), set(), []
