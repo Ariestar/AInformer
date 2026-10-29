@@ -155,7 +155,7 @@ def main() -> int:
     cfg = load_config()
     fc = cfg.get("fetch", {})
     settings = config.load(require_base_url=False)
-    days = args.days if args.days is not None else fc.get("days", 5)
+    days = args.days if args.days is not None else fc.get("days", settings.fetch_days)
     timeout = fc.get("timeout", 20)
     ua = fc.get("user_agent") or settings.user_agent
     cap = fc.get("max_per_source", 15)

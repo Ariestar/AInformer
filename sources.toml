@@ -5,7 +5,7 @@
 version = 1
 
 [fetch]
-days = 7              # 默认时间窗（天）
+days = 60             # 默认时间窗（天）；可用 AINFORMER_FETCH_DAYS 全局覆盖
 timeout = 20
 max_per_source = 60   # 单源上限，只防极端情况，不做筛选
 user_agent = "ainformer/1.0"

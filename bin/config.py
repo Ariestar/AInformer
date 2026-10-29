@@ -41,6 +41,7 @@ class Settings:
     brand: str
     feed_limit: int
     feed_per_source: int
+    fetch_days: int
     user_agent: str
     typesafe_key: str
     typesafe_base: str
@@ -67,6 +68,7 @@ def load(*, require_base_url: bool = True) -> Settings:
         brand=_text("AINFORMER_BRAND", "AInformer"),
         feed_limit=_number("AINFORMER_FEED_LIMIT", 100),
         feed_per_source=_number("AINFORMER_FEED_PER_SOURCE", 10),
+        fetch_days=_number("AINFORMER_FETCH_DAYS", 60),
         user_agent=_text("AINFORMER_USER_AGENT", "ainformer/1.0"),
         typesafe_key=_text("TYPESAFE_API_KEY"),
         typesafe_base=_text("TYPESAFE_BASE_URL", "https://api.typesafe.ai").rstrip("/"),
