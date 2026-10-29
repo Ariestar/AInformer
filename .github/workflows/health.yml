@@ -1,0 +1,36 @@
+name: health
+
+# 源健康检查：源腐烂不会报错，只会慢慢漏消息，所以要定期主动查。
+# 每周一 06:00 UTC（北京时间 14:00）跑一次，也可手动触发。
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+
+      # 有告警时 health.py 返回码为 2，这里会让 run 变红 —— 这就是我们要的信号。
+      # 注意：CI 每次都是全新环境，data/health_log.jsonl 不跨轮持久化，
+      # 因此「连续 N 次零新增」这类依赖历史的告警在 CI 里暂不生效；
+      # HTTP 失败与「最新条目过旧」两类不依赖历史，正常可用。
+      - name: run source health check
+        run: uv run python bin/health.py
+
+      - name: upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report
+          path: data/health.json
+          if-no-files-found: warn
