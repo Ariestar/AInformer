@@ -6,9 +6,9 @@ on:
     workflows: [ci]
     types: [completed]
     branches: [main]
-  # 每天 22:00 UTC（北京时间 06:00）抓一轮，站点不依赖本地机器
+  # 每 4 小时抓一轮（UTC 00/04/08/12/16/20 点，北京时间 08/12/16/20/00/04 点），站点不依赖本地机器
   schedule:
-    - cron: "0 22 * * *"
+    - cron: "0 */4 * * *"
   workflow_dispatch:
 
 permissions:
