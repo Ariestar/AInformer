@@ -70,6 +70,34 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* 只给读屏/键盘用的内容 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 50;
+  padding: 8px 12px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.skip:focus {
+  left: 8px;
+  top: 8px;
+}
 button,
 input,
 select {
@@ -320,6 +348,11 @@ select {
   cursor: default;
 }
 
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .list {
   border: 1px solid var(--border);
   border-radius: 8px;

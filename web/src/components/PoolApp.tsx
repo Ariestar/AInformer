@@ -233,6 +233,9 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
 
   return (
     <>
+      <a className="skip" href="#main">
+        跳到主内容
+      </a>
       <TopBar mode={mode} total={total} selectedCount={selected.size} onModeChange={setMode} />
       <StatsStrip
         sourcesOk={stats.sources_ok}
@@ -243,9 +246,12 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
         windowDays={windowDays}
       />
 
-      <div className="wrap main">
+      <main className="wrap main" id="main">
         {mode === "pool" ? (
           <>
+            <div className="sr-only" aria-live="polite">
+              共 {visible.length} 条，第 {page} / {pageCount} 页
+            </div>
             <Toolbar
               filter={filter}
               sources={sources}
@@ -295,7 +301,7 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
         ) : (
           <BriefView items={selectedItems} cur={cur} onSelect={selectAt} onRemove={toggle} />
         )}
-      </div>
+      </main>
     </>
   );
 }
