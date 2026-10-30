@@ -156,6 +156,8 @@ def _fetch_source(src, *, cutoff, blacklist, timeout, ua, cap, now):
     sid = src["id"]
     # 允许单源覆盖全局上限（如 arXiv 每天上百条，需要单独压量）。
     limit = src.get("max_per_source", cap)
+    # 允许单源覆盖 UA：Substack 等会拦截非浏览器 UA。
+    ua = src.get("user_agent", ua)
     rec = {"id": sid, "name": src["name"], "ok": False, "fetched": 0, "kept": 0, "error": None}
     try:
         blob = fetch_bytes(src["url"], timeout, ua)
