@@ -4,25 +4,27 @@
 
 :root {
   color-scheme: dark;
-  --bg: #101014;
-  --card: #1b1b25;
-  --surface: #1f1f2e;
-  --surface-2: #252536;
+  /* 纯黑底 + 中性灰层次：不用蓝紫调，避免"AI 味"的深蓝背景。
+     层次靠明度差（#000 → #0a0a0a → #141414）而不是色相。 */
+  --bg: #000000;
+  --card: #0a0a0a;
+  --surface: #141414;
+  --surface-2: #1e1e1e;
   --primary: #5e6ad2;
   --primary-hover: #4e5bbf;
-  --primary-soft: rgba(94, 106, 210, 0.1);
-  --primary-ring: rgba(94, 106, 210, 0.15);
-  --text: #f1f1f4;
-  --text-soft: #c9ccd6;
-  --muted: #8a8f98;
-  --border: #2c2c3a;
-  --row-line: rgba(44, 44, 58, 0.5);
+  --primary-soft: rgba(94, 106, 210, 0.14);
+  --primary-ring: rgba(94, 106, 210, 0.22);
+  --text: #f5f5f5;
+  --text-soft: #c9c9c9;
+  --muted: #8b8b8b;
+  --border: #262626;
+  --row-line: rgba(38, 38, 38, 0.8);
   --success: #3dd68c;
   --warning: #f0c000;
   --error: #eb5757;
-  --chip-official-bg: rgba(61, 214, 140, 0.2);
-  --chip-media-bg: rgba(240, 192, 0, 0.2);
-  --chip-aggregator-bg: rgba(94, 106, 210, 0.2);
+  --chip-official-bg: rgba(61, 214, 140, 0.18);
+  --chip-media-bg: rgba(240, 192, 0, 0.18);
+  --chip-aggregator-bg: rgba(94, 106, 210, 0.18);
   --sans: "Inter", -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
 }
