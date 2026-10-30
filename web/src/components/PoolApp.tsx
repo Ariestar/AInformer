@@ -47,27 +47,53 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
     setRestored(true);
   }, []);
 
+  const ctrlRef = useRef<AbortController | null>(null);
+
   // 构建期只内联首屏可见的前若干条，完整列表由浏览器单独请求，可独立缓存。
-  useEffect(() => {
-    let cancelled = false;
-    fetch(DATA_URL)
+  const loadData = useCallback(() => {
+    ctrlRef.current?.abort();
+    const ctrl = new AbortController();
+    ctrlRef.current = ctrl;
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    setLoadError(null);
+    fetch(DATA_URL, { signal: ctrl.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<{ items: Item[] }>;
       })
       .then((payload) => {
-        if (cancelled) return;
+        if (ctrl.signal.aborted) return;
         setItems(payload.items);
         setLoaded(true);
+        // 旧数据里勾选过、新数据里已不存在的 id 清掉，避免存储无限增长。
+        const ids = new Set(payload.items.map((it) => it.id));
+        setSelected((prev) => {
+          const next = new Set([...prev].filter((id) => ids.has(id)));
+          return next.size === prev.size ? prev : next;
+        });
       })
       .catch((err: unknown) => {
+        // 卸载时 cleanup 会 abort，此时 ctrlRef 已置空，不该再报错。
+        if (ctrlRef.current !== ctrl) return;
         // 不静默降级：失败要说出来，否则用户会以为只有前几十条
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : String(err));
-      });
-    return () => {
-      cancelled = true;
-    };
+        setLoadError(
+          err instanceof DOMException && err.name === "AbortError"
+            ? "请求超时"
+            : err instanceof Error
+              ? err.message
+              : String(err),
+        );
+      })
+      .finally(() => clearTimeout(timer));
   }, []);
+
+  useEffect(() => {
+    loadData();
+    return () => {
+      ctrlRef.current?.abort();
+      ctrlRef.current = null;
+    };
+  }, [loadData]);
 
   // 恢复完成前不写回，否则会把刚读到的勾选覆盖成空数组
   useEffect(() => {
@@ -201,9 +227,9 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
     URL.revokeObjectURL(a.href);
   }
 
-  // 总数在构建期已知，不随加载状态跳变；"当前显示"在完整数据到达后才改为筛选结果
+  // 总数在构建期已知，不随加载状态跳变；加载完成前"当前显示"只算真正渲染出来的条数。
   const total = stats.after_dedup;
-  const shown = loaded ? visible.length : stats.after_dedup;
+  const shown = loaded ? visible.length : initialItems.length;
 
   return (
     <>
@@ -237,6 +263,11 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
               onClear={() => setSelected(new Set())}
               onExport={exportMarkdown}
             />
+            {!loaded && !loadError ? (
+              <div className="hint" role="status">
+                正在加载完整列表…
+              </div>
+            ) : null}
             <ItemList
               items={paged}
               selected={selected}
@@ -252,8 +283,12 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
             />
             {loadError ? (
               <div className="empty">
-                完整列表加载失败（{loadError}），当前仅显示构建期保留的 {initialItems.length}{" "}
-                条。刷新重试。
+                完整列表加载失败（{loadError}），当前仅显示构建期保留的 {initialItems.length} 条。
+                <br />
+                <br />
+                <button className="btn" type="button" onClick={loadData}>
+                  重试
+                </button>
               </div>
             ) : null}
           </>
