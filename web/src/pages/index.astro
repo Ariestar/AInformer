@@ -18,18 +18,29 @@ const pool = poolData as unknown as PoolPayload;
     <title>{__SITE_NAME__} · 条目池</title>
     <link rel="alternate" type="application/rss+xml" title={__SITE_NAME__} href="feed.xml" />
     <script is:inline>
-      // 在样式表生效前定好主题，避免亮色用户看到暗色闪一下
+      // 在样式表生效前定好主题，避免亮色用户看到暗色闪一下。
+      // 手动选过就用手动值，否则跟随系统。
       (function () {
         try {
           var saved = localStorage.getItem("ainformer.theme");
           if (saved === "light" || saved === "dark") {
             document.documentElement.dataset.theme = saved;
+            return;
           }
         } catch (e) {}
+        var light = window.matchMedia("(prefers-color-scheme: light)").matches;
+        document.documentElement.dataset.theme = light ? "light" : "dark";
       })();
     </script>
   </head>
   <body>
+    <noscript>
+      <div class="wrap main">
+        <div class="hint">
+          筛选、勾选、翻页需要 JavaScript。你仍可订阅 <a href="feed.xml">RSS</a> 获取全部条目。
+        </div>
+      </div>
+    </noscript>
     <App client:load stats={pool.stats} windowDays={pool.window_days} initialItems={pool.items.slice(0, 24)} />
   </body>
 </html>
