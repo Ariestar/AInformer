@@ -3,6 +3,7 @@ import { fmtDate, tierName } from "../lib/format";
 import { type FilterState, filterItems, initialFilter, sourceOptions } from "../lib/select";
 import type { Item, Stats, ViewMode } from "../lib/types";
 import { onlyQueryChanged, readUrlState, type UrlState, writeUrlState } from "../lib/url";
+import { useDebouncedValue } from "../lib/useDebounced";
 import BriefView from "./BriefView";
 import ItemList from "./ItemList";
 import Pagination from "./Pagination";
@@ -34,6 +35,8 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterState>(initialFilter);
+  // 输入框立即回显；过滤等 200ms 再用新值，避免每次按键全量重算。
+  const [query, setQuery] = useState(filter.q);
   const [mode, setMode] = useState<ViewMode>("pool");
   const [page, setPage] = useState(1);
   const [cur, setCur] = useState(0);
@@ -112,6 +115,7 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   useEffect(() => {
     const s = readUrlState(location.search);
     setFilter(s.filter);
+    setQuery(s.filter.q);
     setMode(s.mode);
     setPage(s.page);
     prevUrlRef.current = s;
@@ -134,6 +138,7 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
     function onPop() {
       const s = readUrlState(location.search);
       setFilter(s.filter);
+      setQuery(s.filter.q);
       setMode(s.mode);
       setPage(s.page);
       prevUrlRef.current = s;
@@ -141,6 +146,16 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+
+  // 输入防抖：只有防抖值追上当前输入、且与已生效的筛选词不同时才更新。
+  const debouncedQuery = useDebouncedValue(query, 200);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (query !== debouncedQuery) return;
+    if (filter.q === debouncedQuery) return;
+    setFilter((prev) => ({ ...prev, q: debouncedQuery }));
+    setPage(1);
+  }, [hydrated, query, debouncedQuery, filter.q]);
 
   const visible = useMemo(() => filterItems(items, filter), [items, filter]);
   const selectedItems = useMemo(() => items.filter((it) => selected.has(it.id)), [items, selected]);
@@ -254,9 +269,11 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
             </div>
             <Toolbar
               filter={filter}
+              query={query}
               sources={sources}
               selectedCount={selected.size}
               onChange={changeFilter}
+              onQueryChange={setQuery}
               onSelectVisible={() =>
                 setSelected((prev) => {
                   const next = new Set(prev);

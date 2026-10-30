@@ -3,9 +3,11 @@ import type { SortKey } from "../lib/types";
 
 interface Props {
   filter: FilterState;
+  query: string;
   sources: Array<{ id: string; name: string }>;
   selectedCount: number;
   onChange: (next: FilterState) => void;
+  onQueryChange: (query: string) => void;
   onSelectVisible: () => void;
   onClear: () => void;
   onExport: () => void;
@@ -13,9 +15,11 @@ interface Props {
 
 export default function Toolbar({
   filter,
+  query,
   sources,
   selectedCount,
   onChange,
+  onQueryChange,
   onSelectVisible,
   onClear,
   onExport,
@@ -27,8 +31,8 @@ export default function Toolbar({
         type="search"
         placeholder="搜标题、摘要、来源…"
         aria-label="搜索条目"
-        value={filter.q}
-        onChange={(e) => onChange({ ...filter, q: e.target.value })}
+        value={query}
+        onChange={(e) => onQueryChange(e.target.value)}
       />
       <select
         className="pick"
