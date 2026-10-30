@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fmtDate, tierName } from "../lib/format";
 import { type FilterState, filterItems, initialFilter, sourceOptions } from "../lib/select";
 import type { Item, Stats, ViewMode } from "../lib/types";
+import { onlyQueryChanged, readUrlState, type UrlState, writeUrlState } from "../lib/url";
 import BriefView from "./BriefView";
 import ItemList from "./ItemList";
 import Pagination from "./Pagination";
@@ -77,6 +78,43 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
       // 存储不可用时静默降级为仅本次会话有效
     }
   }, [selected, restored]);
+
+  // URL 承载筛选/视图/页码：进页面读一次，之后变更写回，支持分享与刷新保留。
+  const [hydrated, setHydrated] = useState(false);
+  const prevUrlRef = useRef<UrlState | null>(null);
+
+  useEffect(() => {
+    const s = readUrlState(location.search);
+    setFilter(s.filter);
+    setMode(s.mode);
+    setPage(s.page);
+    prevUrlRef.current = s;
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const next: UrlState = { filter, mode, page };
+    const prev = prevUrlRef.current;
+    // 打字只 replace（不刷历史），其余操作 push（后退键可回退）。
+    const timer = setTimeout(() => {
+      writeUrlState(next, prev && onlyQueryChanged(prev, next) ? "replace" : "push");
+      prevUrlRef.current = next;
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [hydrated, filter, mode, page]);
+
+  useEffect(() => {
+    function onPop() {
+      const s = readUrlState(location.search);
+      setFilter(s.filter);
+      setMode(s.mode);
+      setPage(s.page);
+      prevUrlRef.current = s;
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const visible = useMemo(() => filterItems(items, filter), [items, filter]);
   const selectedItems = useMemo(() => items.filter((it) => selected.has(it.id)), [items, selected]);
