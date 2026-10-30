@@ -24,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ITEMS_PATH = ROOT / "data" / "items.json"
 SCHEMA_PATH = ROOT / "schema" / "pool.schema.json"
+CLUSTERS_PATH = ROOT / "data" / "clusters.json"
 # 构建期用 src/data（走 Astro 的模块图），运行期用 public/data（浏览器 fetch）。
 # 同一份数据两个去处，内容必须一致，所以只在 write 时复制，不做二次加工。
 SRC_OUT = ROOT / "web" / "src" / "data" / "items.json"
@@ -154,20 +155,41 @@ def cluster_id(title: str) -> str:
     return hashlib.sha1(fingerprint.encode("utf-8")).hexdigest()[:8]
 
 
-def to_export(raw: dict) -> dict:
+def load_events(path: Path) -> dict[str, tuple[str, int, bool]]:
+    """读 bin/cluster.py 的合并结果，返回 url → (event_id, size, is_primary)。
+
+    没有 clusters.json 时返回空表 —— 每条条目退化成独立事件，导出照常，
+    不会因为合并层没跑就中断构建。
+    """
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    out: dict[str, tuple[str, int, bool]] = {}
+    for c in data.get("clusters", []):
+        for m in c.get("members", []):
+            out[m["url"]] = (c["event_id"], c["size"], m["id"] == c["primary"])
+    return out
+
+
+def to_export(raw: dict, events: dict[str, tuple[str, int, bool]]) -> dict:
     items = []
     for it in raw["items"]:
+        url = it["url"]
+        event_id, size, is_primary = events.get(url, (item_id(url), 1, True))
         items.append(
             {
-                "id": item_id(it["url"]),
+                "id": item_id(url),
                 "source_id": it["source_id"],
                 "source_name": it["source_name"],
                 "tier": it.get("tier", "media"),
                 "title": it["title"],
-                "url": it["url"],
+                "url": url,
                 "published": it.get("published"),
                 "summary": it.get("summary", ""),
                 "cluster_id": cluster_id(it["title"]),
+                "event_id": event_id,
+                "event_size": size,
+                "is_primary": is_primary,
                 "weight": float(it.get("weight", 0.5)),
             }
         )
@@ -176,6 +198,7 @@ def to_export(raw: dict) -> dict:
         "generated_at": raw["generated_at"],
         "window_days": raw["window_days"],
         "stats": raw["stats"],
+        "sources": raw.get("sources", []),
         "items": items,
     }
 
@@ -193,8 +216,9 @@ def main() -> int:
 
     raw = json.loads(src.read_text(encoding="utf-8"))
     schema = json.loads(Path(args.schema).read_text(encoding="utf-8"))
+    events = load_events(CLUSTERS_PATH)
 
-    payload = to_export(raw)
+    payload = to_export(raw, events)
     errors = validate(payload, schema, schema)
     if errors:
         print(f"契约校验失败，共 {len(errors)} 处：", file=sys.stderr)
@@ -210,12 +234,12 @@ def main() -> int:
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.write_text(text, encoding="utf-8")
 
-    clusters = len({i["cluster_id"] for i in payload["items"]})
+    clusters = len({i["event_id"] for i in payload["items"]})
     tiers: dict[str, int] = {}
     for it in payload["items"]:
         tiers[it["tier"]] = tiers.get(it["tier"], 0) + 1
 
-    print(f"契约校验通过：{len(payload['items'])} 条 / {clusters} 个事件簇")
+    print(f"契约校验通过：{len(payload['items'])} 条 / {clusters} 个事件")
     print("  层级 " + "、".join(f"{k} {v}" for k, v in sorted(tiers.items())))
     print(
         f"写入 {SRC_OUT.relative_to(ROOT)}、{PUBLIC_OUT.relative_to(ROOT)}"

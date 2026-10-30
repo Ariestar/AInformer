@@ -46,6 +46,9 @@ class Settings:
     typesafe_key: str
     typesafe_base: str
     jev_model: str
+    llm_api_key: str
+    llm_base_url: str
+    llm_model: str
 
 
 def load(*, require_base_url: bool = True) -> Settings:
@@ -73,4 +76,7 @@ def load(*, require_base_url: bool = True) -> Settings:
         typesafe_key=_text("TYPESAFE_API_KEY"),
         typesafe_base=_text("TYPESAFE_BASE_URL", "https://api.typesafe.ai").rstrip("/"),
         jev_model=_text("JEV_MODEL", "jev-latest"),
+        llm_api_key=_text("LLM_API_KEY"),
+        llm_base_url=_text("LLM_BASE_URL", "https://api.deepseek.com").rstrip("/"),
+        llm_model=_text("LLM_MODEL", "deepseek-chat"),
     )

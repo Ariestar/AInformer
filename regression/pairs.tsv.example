@@ -1,0 +1,27 @@
+# 人工标注：判断「这两条是不是同一事件」
+#
+# 用法：复制成 regression/pairs.tsv 后按需增删，然后
+#     uv run python bin/cluster.py eval
+#
+# 格式：url_a <TAB> url_b <TAB> same <TAB> 备注
+#   same: 1 = 同一事件（应该合并）；0 = 不同事件（不许合并）
+#   顺序无所谓，脚本会把两条 url 排序后再匹配 pair_id
+#
+# 门槛：错合并（标注 0 却判了 true）= 0 才算过。漏合并可以接受。
+#
+# 下面这几条都是从 2026-10-29 那期数据里挑的，覆盖四种典型情况，可以直接用。
+
+# ① 官方原文 × 聚合源转述 —— 应该合并
+https://github.blog/changelog/2026-10-28-github-copilot-app-universe-releases	https://aihot.news/items/xonc43xgcx39303i40k8022rl	1	官方公告 + 中文汇总
+
+# ② 同一天、同一产品线，但是两个不同功能 —— 不许合并
+https://github.blog/changelog/2026-10-28-github-copilot-app-universe-releases	https://github.blog/changelog/2026-10-28-github-copilot-fusion-now-supports-selection-of-local-models	0	同场发布会的两个独立功能
+
+# ③ 同一公司同一天发的两个不同模型 —— 不许合并
+https://aihot.news/items/fjeloaahylonpc0pv5tduusud	https://aihot.news/items/ku284awvyj7i3dt4j7oflb78m	0	Gemini 4 Carbon 与 Genie 4 是两个模型
+
+# ④ 同一事件的中英文报道 —— 应该合并（考验跨语言召回）
+https://deepmind.google/blog/genie-4-a-new-generation-of-world-simulation/	https://aihot.news/items/l74eacnb38ytvm5hm8om7h7cs	1	英文原文 + 中文转述
+
+# ⑤ 同一篇文章的重复投放（带测试前缀）—— 应该合并
+https://www.qbitai.com/2026/10/506098.html	https://www.qbitai.com/2026/10/506194.html	1	同一篇的重复条目

@@ -4,12 +4,16 @@
   "title": "AInformer item pool export",
   "description": "前端消费的条目池契约。抓取层与 UI 之间的唯一边界，字段变更必须同时改这里和 web/src/lib/types.ts。",
   "type": "object",
-  "required": ["generated_at", "window_days", "stats", "items"],
+  "required": ["generated_at", "window_days", "stats", "sources", "items"],
   "additionalProperties": false,
   "properties": {
     "generated_at": { "type": "string", "format": "date-time" },
     "window_days": { "type": "integer", "minimum": 1 },
     "stats": { "$ref": "#/$defs/stats" },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source" }
+    },
     "items": {
       "type": "array",
       "items": { "$ref": "#/$defs/item" }
@@ -27,6 +31,19 @@
         "after_dedup": { "type": "integer", "minimum": 0 }
       }
     },
+    "source": {
+      "type": "object",
+      "required": ["id", "name", "ok", "fetched", "kept", "error"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "ok": { "type": "boolean" },
+        "fetched": { "type": "integer", "minimum": 0 },
+        "kept": { "type": "integer", "minimum": 0 },
+        "error": { "type": ["string", "null"] }
+      }
+    },
     "item": {
       "type": "object",
       "required": [
@@ -39,6 +56,9 @@
         "published",
         "summary",
         "cluster_id",
+        "event_id",
+        "event_size",
+        "is_primary",
         "weight"
       ],
       "additionalProperties": false,
@@ -58,7 +78,21 @@
         "cluster_id": {
           "type": "string",
           "minLength": 4,
-          "description": "同一事件（标题指纹相同）共享同一个 cluster_id，前端据此展示旁证"
+          "description": "标题指纹簇，历史遗留字段，前端当前以 event_id 为准"
+        },
+        "event_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "bin/cluster.py 合并出的事件标识，前端据此把条目归成「一件事」"
+        },
+        "event_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "同一事件包含的报道条数"
+        },
+        "is_primary": {
+          "type": "boolean",
+          "description": "是否该事件的主源（官方优先，其次最早）"
         },
         "weight": { "type": "number", "minimum": 0, "maximum": 1 }
       }

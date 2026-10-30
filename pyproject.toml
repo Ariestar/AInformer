@@ -38,7 +38,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["config", "export", "fetch", "health", "triage"]
+known-first-party = ["cluster", "config", "daily", "export", "fetch", "health", "llm", "triage"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

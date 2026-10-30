@@ -13,6 +13,9 @@ function makeItem(over: Partial<Item> = {}): Item {
     published: "2026-10-28T00:00:00+00:00",
     summary: "",
     cluster_id: "c1",
+    event_id: "e1",
+    event_size: 1,
+    is_primary: true,
     weight: 0.5,
     ...over,
   };
