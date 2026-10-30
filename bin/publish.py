@@ -79,19 +79,35 @@ def main() -> int:
 
     py = sys.executable
 
-    run("1/6 抓取源", [py, str(BIN / "fetch.py")])
+    run("1/10 抓取源", [py, str(BIN / "fetch.py")])
 
     if not args.no_triage:
-        run("2/6 Jev 判断", [py, str(BIN / "triage.py")])
+        run("2/10 Jev 判断", [py, str(BIN / "triage.py")])
     else:
-        print("\n=== 2/6 Jev 判断（已跳过）===")
+        print("\n=== 2/10 Jev 判断（已跳过）===")
 
-    run("3/6 导出前端契约", [py, str(BIN / "export.py")])
+    # 事件归并：召回 → LLM 判定 → 合并。判定带缓存，只对新增候选对调模型。
+    # 没配 LLM_API_KEY 就整段跳过，export 会把每条条目当独立事件。
+    if cfg.llm_api_key:
+        run("3/10 召回候选对", [py, str(BIN / "cluster.py"), "prepare"])
+        run("4/10 判定候选对", [py, str(BIN / "cluster.py"), "judge"])
+        run("5/10 合并事件", [py, str(BIN / "cluster.py"), "merge"])
+    else:
+        print("\n=== 3-5/10 事件归并（跳过：未配置 LLM_API_KEY）===")
 
-    run("4/6 构建站点", [bun, "run", "build"], cwd=WEB)
+    # 日报依赖合并结果（clusters.json）。没有合并结果就跳过，站点仍可用，
+    # 只是「今日」入口会显示空日报。
+    if (ROOT / "data" / "clusters.json").exists():
+        run("6/10 生成日报", [py, str(BIN / "daily.py")])
+    else:
+        print("\n=== 6/10 生成日报（跳过：无 clusters.json）===")
+
+    run("7/10 导出前端契约", [py, str(BIN / "export.py")])
+
+    run("8/10 构建站点", [bun, "run", "build"], cwd=WEB)
 
     run(
-        "5/6 生成 feed",
+        "9/10 生成 feed",
         [
             py,
             str(BIN / "build_feed.py"),
@@ -105,14 +121,14 @@ def main() -> int:
     )
 
     if args.no_deploy:
-        print("\n=== 6/6 部署（已跳过）===")
+        print("\n=== 10/10 部署（已跳过）===")
         print(f"产物在 {OUT}")
         return 0
 
     deploy = [bun, "x", "wrangler@4", "pages", "deploy", "--branch", "main", "--commit-dirty=true"]
     if args.project:
         deploy += ["--project-name", args.project]
-    run("6/6 部署到 Cloudflare Pages", deploy, cwd=ROOT)
+    run("10/10 部署到 Cloudflare Pages", deploy, cwd=ROOT)
 
     print(f"\n完成。站点 {base}")
     print(f"      RSS  {base}/feed.xml")

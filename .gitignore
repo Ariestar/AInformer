@@ -2,6 +2,10 @@
 data/*.json
 data/*.jsonl
 data/*.log
+data/daily/
+
+# ── 事件归并的 agent 工作目录（候选对/判定结果）────────
+.work/
 
 # ── 站点产物：由 web/ 构建与 build_feed.py 生成 ──────
 # 需要把页面本身也纳入版本时，删掉下面一行即可

@@ -19,6 +19,14 @@ export default function TopBar({ mode, total, selectedCount, onModeChange }: Pro
         <div className="seg">
           <button
             type="button"
+            className={mode === "daily" ? "on" : undefined}
+            aria-pressed={mode === "daily"}
+            onClick={() => onModeChange("daily")}
+          >
+            今日
+          </button>
+          <button
+            type="button"
             className={mode === "pool" ? "on" : undefined}
             aria-pressed={mode === "pool"}
             onClick={() => onModeChange("pool")}
