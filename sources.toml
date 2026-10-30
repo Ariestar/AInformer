@@ -105,6 +105,65 @@ tier = "media"
 weight = 0.8
 url = "https://spectrum.ieee.org/feeds/topic/robotics.rss"
 
+[[source]]
+id = "techxplore_robotics"
+name = "TechXplore Robotics"
+tier = "media"
+weight = 0.75
+url = "https://techxplore.com/rss-feed/robotics-news/"
+
+[[source]]
+id = "sciencedaily_robotics"
+name = "ScienceDaily Robotics"
+tier = "aggregator"
+weight = 0.55
+# 机构新闻稿聚合，量大且偏软；压到 20 条，避免淹没一手源。
+max_per_source = 20
+url = "https://www.sciencedaily.com/rss/computers_math/robotics.xml"
+
+# ── 深度分析 / 技术 newsletter ────────────────────
+# 定位：硬核、专业，但讲得清楚，非纯论文。质量高、更新不频繁，不吵。
+
+[[source]]
+id = "import_ai"
+name = "Import AI"
+tier = "media"
+weight = 0.8
+# Jack Clark 的周报，政策 + 技术并重，业内必读。
+url = "https://importai.substack.com/feed"
+
+[[source]]
+id = "ahead_of_ai"
+name = "Ahead of AI"
+tier = "media"
+weight = 0.8
+# Sebastian Raschka 的技术长文，模型/训练深度解读，教程式。
+url = "https://magazine.sebastianraschka.com/feed"
+
+[[source]]
+id = "interconnects"
+name = "Interconnects"
+tier = "media"
+weight = 0.75
+# Nathan Lambert 的 LLM 研究评论，一线视角。
+url = "https://www.interconnects.ai/feed"
+
+# ── 优质科学/科技媒体 ─────────────────────────────
+[[source]]
+id = "quanta"
+name = "Quanta Magazine"
+tier = "media"
+weight = 0.8
+# 质量极高的科学科普，可读性强，普通人也能读进去。
+url = "https://www.quantamagazine.org/feed/"
+
+[[source]]
+id = "mit_tech_review"
+name = "MIT Technology Review"
+tier = "media"
+weight = 0.8
+url = "https://www.technologyreview.com/feed/"
+
 # ── 论文 ──────────────────────────────────────────
 # 注意端点：export.arxiv.org 现在返回空 feed，必须用 rss.arxiv.org。
 # cs.RO 每天上百条，用 max_per_source 单独压到 15，避免刷屏。
