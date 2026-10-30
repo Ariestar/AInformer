@@ -4,6 +4,7 @@ import { type FilterState, filterItems, initialFilter, sourceOptions } from "../
 import type { Item, Stats, ViewMode } from "../lib/types";
 import BriefView from "./BriefView";
 import ItemList from "./ItemList";
+import Pagination from "./Pagination";
 import StatsStrip from "./StatsStrip";
 import Toolbar from "./Toolbar";
 import TopBar from "./TopBar";
@@ -11,6 +12,7 @@ import TopBar from "./TopBar";
 // 勾选以条目的稳定 id 为键。
 const SEL_KEY = "ainformer.selection.v1";
 const DATA_URL = "/data/items.json";
+const PAGE_SIZE = 50;
 
 interface Props {
   stats: Stats;
@@ -32,6 +34,7 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterState>(initialFilter);
   const [mode, setMode] = useState<ViewMode>("pool");
+  const [page, setPage] = useState(1);
   const [cur, setCur] = useState(0);
   // 服务端渲染时读不到 localStorage，首屏必须是空集合，否则客户端首次渲染
   // 与 SSR 输出不一致，React 会判定 hydration mismatch 并整树重渲染。
@@ -78,6 +81,22 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   const visible = useMemo(() => filterItems(items, filter), [items, filter]);
   const selectedItems = useMemo(() => items.filter((it) => selected.has(it.id)), [items, selected]);
   const sources = useMemo(() => sourceOptions(items), [items]);
+
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const paged = useMemo(
+    () => visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [visible, page],
+  );
+
+  // 筛选条件变化后回到第一页；页码越界时夹回最后一页。
+  const changeFilter = useCallback((next: FilterState) => {
+    setFilter(next);
+    setPage(1);
+  }, []);
+
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
 
   // 移除条目后游标可能越界，回到第一条
   useEffect(() => {
@@ -167,11 +186,11 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
               filter={filter}
               sources={sources}
               selectedCount={selected.size}
-              onChange={setFilter}
+              onChange={changeFilter}
               onSelectVisible={() =>
                 setSelected((prev) => {
                   const next = new Set(prev);
-                  visible.forEach((it) => {
+                  paged.forEach((it) => {
                     next.add(it.id);
                   });
                   return next;
@@ -180,7 +199,19 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
               onClear={() => setSelected(new Set())}
               onExport={exportMarkdown}
             />
-            <ItemList items={visible} selected={selected} onToggle={toggle} />
+            <ItemList
+              items={paged}
+              selected={selected}
+              onToggle={toggle}
+              footer={
+                <Pagination
+                  page={page}
+                  pageCount={pageCount}
+                  total={visible.length}
+                  onChange={setPage}
+                />
+              }
+            />
             {loadError ? (
               <div className="empty">
                 完整列表加载失败（{loadError}），当前仅显示构建期保留的 {initialItems.length}{" "}

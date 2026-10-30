@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { fmtDate } from "../lib/format";
 import type { Item } from "../lib/types";
 
@@ -5,9 +6,10 @@ interface Props {
   items: Item[];
   selected: Set<string>;
   onToggle: (id: string) => void;
+  footer?: ReactNode;
 }
 
-export default function ItemList({ items, selected, onToggle }: Props) {
+export default function ItemList({ items, selected, onToggle, footer }: Props) {
   return (
     <div className="list">
       {items.length === 0 ? (
@@ -41,6 +43,7 @@ export default function ItemList({ items, selected, onToggle }: Props) {
           );
         })
       )}
+      {footer}
     </div>
   );
 }

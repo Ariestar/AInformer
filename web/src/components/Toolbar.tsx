@@ -70,7 +70,7 @@ export default function Toolbar({
       </button>
       <span className="sp" />
       <button className="btn" type="button" onClick={onSelectVisible}>
-        全选当前
+        全选本页
       </button>
       <button className="btn" type="button" onClick={onClear}>
         清空
