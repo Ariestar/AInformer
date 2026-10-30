@@ -9,7 +9,6 @@
   --bg: #000000;
   --card: #0a0a0a;
   --surface: #141414;
-  --surface-2: #1e1e1e;
   --primary: #5e6ad2;
   --primary-hover: #4e5bbf;
   --primary-soft: rgba(94, 106, 210, 0.14);
@@ -34,7 +33,6 @@
   --bg: #f6f6f9;
   --card: #ffffff;
   --surface: #f0f0f5;
-  --surface-2: #e8e8f0;
   --primary: #5e6ad2;
   --primary-hover: #4e5bbf;
   --primary-soft: rgba(94, 106, 210, 0.08);
@@ -241,9 +239,6 @@ select {
 }
 .stat .v.dim {
   color: var(--muted);
-}
-.stat .v.warn {
-  color: var(--warning);
 }
 
 .wrap {

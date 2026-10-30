@@ -27,9 +27,7 @@ export default function ItemList({ items, selected, onToggle, footer }: Props) {
                   aria-label={`选中：${it.title}`}
                   onChange={() => onToggle(it.id)}
                 />
-                <div className={`src ${it.tier}`} title={it.source_name}>
-                  {it.source_name}
-                </div>
+                <div className={`src ${it.tier}`}>{it.source_name}</div>
                 <div className="t">
                   <a className="ti" href={it.url} target="_blank" rel="noopener">
                     {it.title}

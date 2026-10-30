@@ -1,6 +1,5 @@
 // 与 schema/pool.schema.json 一一对应。改字段必须同时改 schema，否则 export.py 会拦住构建。
 export type Tier = "official" | "media" | "aggregator";
-export type Theme = "dark" | "light";
 export type SortKey = "time" | "source";
 export type ViewMode = "pool" | "brief";
 
