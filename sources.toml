@@ -130,6 +130,8 @@ name = "Import AI"
 tier = "media"
 weight = 0.8
 # Jack Clark 的周报，政策 + 技术并重，业内必读。
+# Substack 会拦非浏览器 UA，单源指定浏览器 UA。
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36"
 url = "https://importai.substack.com/feed"
 
 [[source]]
@@ -138,6 +140,7 @@ name = "Ahead of AI"
 tier = "media"
 weight = 0.8
 # Sebastian Raschka 的技术长文，模型/训练深度解读，教程式。
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36"
 url = "https://magazine.sebastianraschka.com/feed"
 
 [[source]]
