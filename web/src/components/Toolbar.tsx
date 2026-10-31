@@ -26,14 +26,28 @@ export default function Toolbar({
 }: Props) {
   return (
     <div className="bar">
-      <input
-        className="inp q"
-        type="search"
-        placeholder="搜标题、摘要、来源…"
-        aria-label="搜索条目"
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-      />
+      <div className="search">
+        <svg
+          className="search-i"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <circle cx="7" cy="7" r="4.5" />
+          <path d="M10.6 10.6 14 14" />
+        </svg>
+        <input
+          className="inp q"
+          type="search"
+          placeholder="搜标题、摘要、来源…"
+          aria-label="搜索条目"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+        />
+      </div>
       <select
         className="pick"
         aria-label="按来源筛选"

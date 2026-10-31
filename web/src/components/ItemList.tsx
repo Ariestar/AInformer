@@ -37,7 +37,18 @@ export default function ItemList({ items, selected, onToggle, footer }: Props) {
                 <div className={it.published ? "d" : "d none"}>{fmtDate(it.published)}</div>
                 {/* 标题本身就是同一个链接，箭头只是视觉提示，不再做成重复链接。 */}
                 <span className="ext" aria-hidden="true">
-                  ↗
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 11 11 5" />
+                    <path d="M6 5h5v5" />
+                  </svg>
                 </span>
               </li>
             );
