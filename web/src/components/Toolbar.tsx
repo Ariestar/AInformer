@@ -1,5 +1,6 @@
 import type { FilterState } from "../lib/select";
 import type { SortKey } from "../lib/types";
+import Select from "./Select";
 
 interface Props {
   filter: FilterState;
@@ -48,28 +49,24 @@ export default function Toolbar({
           onChange={(e) => onQueryChange(e.target.value)}
         />
       </div>
-      <select
-        className="pick"
-        aria-label="按来源筛选"
+      <Select
+        ariaLabel="按来源筛选"
         value={filter.src}
-        onChange={(e) => onChange({ ...filter, src: e.target.value })}
-      >
-        <option value="all">全部来源</option>
-        {sources.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </select>
-      <select
-        className="pick"
-        aria-label="排序方式"
+        options={[
+          { value: "all", label: "全部来源" },
+          ...sources.map((s) => ({ value: s.id, label: s.name })),
+        ]}
+        onChange={(v) => onChange({ ...filter, src: v })}
+      />
+      <Select
+        ariaLabel="排序方式"
         value={filter.sort}
-        onChange={(e) => onChange({ ...filter, sort: e.target.value as SortKey })}
-      >
-        <option value="time">按时间</option>
-        <option value="source">按来源</option>
-      </select>
+        options={[
+          { value: "time", label: "按时间" },
+          { value: "source", label: "按来源" },
+        ]}
+        onChange={(v) => onChange({ ...filter, sort: v as SortKey })}
+      />
       <button
         className={filter.official ? "tog on" : "tog"}
         type="button"

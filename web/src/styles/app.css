@@ -23,6 +23,7 @@
   --border: #262626;
   --border-strong: #3a3a3a;
   --row-line: rgba(38, 38, 38, 0.9);
+  --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.5);
   --success: #3dd68c;
   --warning: #f0c000;
   --error: #eb5757;
@@ -53,6 +54,7 @@
   --border: #e2e2ec;
   --border-strong: #cfcfdc;
   --row-line: rgba(226, 226, 236, 0.9);
+  --shadow-pop: 0 8px 28px rgba(20, 20, 35, 0.18);
   --success: #0e8a5f;
   --warning: #a8741a;
   --error: #d14545;
@@ -297,10 +299,8 @@ select {
   align-items: center;
   margin-bottom: 12px;
 }
-/* 下拉框用 .pick：原来的 .sel 会和选中行的 .row.sel 撞车，
-   把下拉框的 height/padding/font 一起套到列表行上。 */
-.inp,
-.pick {
+/* 搜索框等输入框（下拉框已换成自定义组件 .sel，见下方）。 */
+.inp {
   height: 30px;
   padding: 0 11px;
   background: var(--card);
@@ -316,13 +316,101 @@ select {
 .inp::placeholder {
   color: var(--muted);
 }
-.inp:focus,
-.pick:focus {
+.inp:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--primary-ring);
 }
 .inp.q {
   width: 260px;
+}
+/* 自写下拉（替代原生 select）：弹层也走主题 token，连选项列表都可控。 */
+.sel {
+  position: relative;
+  display: inline-flex;
+}
+.sel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font: 400 13px / 1 var(--sans);
+  cursor: pointer;
+  transition:
+    border-color 0.12s linear,
+    box-shadow 0.12s linear;
+}
+.sel-btn:hover {
+  border-color: var(--border-strong);
+}
+.sel-btn[aria-expanded="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+.sel-btn .lbl {
+  max-width: 180px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sel-btn .chev {
+  width: 13px;
+  height: 13px;
+  color: var(--muted);
+  flex: none;
+  transition: transform 0.14s ease;
+}
+.sel-btn[aria-expanded="true"] .chev {
+  transform: rotate(180deg);
+}
+.sel-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-pop);
+  z-index: 50;
+}
+.sel-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font: 400 13px / 1.4 var(--sans);
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.sel-opt:hover,
+.sel-opt.active {
+  background: var(--surface);
+  color: var(--text);
+}
+.sel-opt[aria-selected="true"] .lbl {
+  color: var(--accent);
+}
+.sel-opt .ck-svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  flex: none;
+  visibility: hidden;
+}
+.sel-opt[aria-selected="true"] .ck-svg {
+  visibility: visible;
 }
 /* 搜索框带一枚手绘放大镜：绝对定位在输入框内，不占布局 */
 .search {
