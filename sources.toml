@@ -59,6 +59,116 @@ weight = 0.9
 # 微软研究院官方博客，含 MSRA 成果。英文，频率不高但单篇分量重。
 url = "https://www.microsoft.com/en-us/research/feed/"
 
+[[source]]
+id = "nvidia_blog"
+name = "NVIDIA Blog"
+tier = "official"
+weight = 0.9
+url = "https://blogs.nvidia.com/feed/"
+
+[[source]]
+id = "google_research"
+name = "Google Research"
+tier = "official"
+weight = 0.9
+url = "https://research.google/blog/rss/"
+
+[[source]]
+id = "apple_ml"
+name = "Apple Machine Learning"
+tier = "official"
+weight = 0.85
+url = "https://machinelearning.apple.com/rss.xml"
+
+[[source]]
+id = "meta_engineering"
+name = "Meta Engineering"
+tier = "official"
+weight = 0.85
+url = "https://engineering.fb.com/feed/"
+
+[[source]]
+id = "aws_ml_blog"
+name = "AWS Machine Learning Blog"
+tier = "official"
+weight = 0.8
+url = "https://aws.amazon.com/blogs/machine-learning/feed/"
+
+# ── 具身 / 机器人 ──────────────────────────────────
+# 中文机器人垂直媒体基本都没有可用 RSS（智东西 500、高工机器人证书错误、
+# 机器人大讲堂只有公众号），所以这块以英文源 + arXiv 论文为主。
+
+[[source]]
+id = "ieee_spectrum_robotics"
+name = "IEEE Spectrum Robotics"
+tier = "media"
+weight = 0.8
+url = "https://spectrum.ieee.org/feeds/topic/robotics.rss"
+
+[[source]]
+id = "techxplore_robotics"
+name = "TechXplore Robotics"
+tier = "media"
+weight = 0.75
+url = "https://techxplore.com/rss-feed/robotics-news/"
+
+[[source]]
+id = "sciencedaily_robotics"
+name = "ScienceDaily Robotics"
+tier = "aggregator"
+weight = 0.55
+# 机构新闻稿聚合，量大且偏软；压到 20 条，避免淹没一手源。
+max_per_source = 20
+url = "https://www.sciencedaily.com/rss/computers_math/robotics.xml"
+
+# ── 深度分析 / 技术 newsletter ────────────────────
+# 定位：硬核、专业，但讲得清楚，非纯论文。质量高、更新不频繁，不吵。
+
+[[source]]
+id = "ahead_of_ai"
+name = "Ahead of AI"
+tier = "media"
+weight = 0.8
+# Sebastian Raschka 的技术长文，模型/训练深度解读，教程式。
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36"
+url = "https://magazine.sebastianraschka.com/feed"
+
+[[source]]
+id = "interconnects"
+name = "Interconnects"
+tier = "media"
+weight = 0.75
+# Nathan Lambert 的 LLM 研究评论，一线视角。
+url = "https://www.interconnects.ai/feed"
+
+# ── 优质科学/科技媒体 ─────────────────────────────
+[[source]]
+id = "quanta"
+name = "Quanta Magazine"
+tier = "media"
+weight = 0.8
+# 质量极高的科学科普，可读性强，普通人也能读进去。
+url = "https://www.quantamagazine.org/feed/"
+
+[[source]]
+id = "mit_tech_review"
+name = "MIT Technology Review"
+tier = "media"
+weight = 0.8
+url = "https://www.technologyreview.com/feed/"
+
+# ── 论文 ──────────────────────────────────────────
+# 注意端点：export.arxiv.org 现在返回空 feed，必须用 rss.arxiv.org。
+# cs.RO 每天上百条，用 max_per_source 单独压到 15，避免刷屏。
+
+[[source]]
+id = "arxiv_cs_ro"
+name = "arXiv cs.RO"
+tier = "media"
+weight = 0.5
+max_per_source = 15
+url = "https://rss.arxiv.org/rss/cs.RO"
+
 # ── 媒体源：只做交叉验证，不作事实依据 ────────────
 [[source]]
 id = "qbitai"
@@ -147,14 +257,6 @@ name = "赛博禅心"
 tier = "media"
 weight = 0.55
 url = "https://wechat2rss.bestblogs.dev/feed/752c31ca0446b837339463fc5440539e20267d2f.xml"
-
-[[source]]
-id = "bytedance_tech"
-name = "字节跳动技术团队"
-tier = "media"
-weight = 0.7
-# 实测最后更新 2026-08-05，已超 30 天。health.py 会报"可能已停更"，这是真实情况，不是误报。
-url = "https://wechat2rss.bestblogs.dev/feed/6efd40bb335d2037f365d284cb5e00f0843e737e.xml"
 
 [[source]]
 id = "tencent_tech"

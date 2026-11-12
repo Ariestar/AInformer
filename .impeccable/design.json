@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-30T16:20:00Z",
+  "title": "Design System: AInformer",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#000000",
+          "#0a0a0a",
+          "#141414",
+          "#262626",
+          "#3a3a3a",
+          "#6a6a6a",
+          "#a8a8a8",
+          "#f5f5f5"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Wire Blue",
+        "canonical": "#7c86e8",
+        "tonalRamp": [
+          "#1c1f45",
+          "#2b3170",
+          "#3f4794",
+          "#535db5",
+          "#5e6ad2",
+          "#7c86e8",
+          "#a3aaf2",
+          "#d3d7fb"
+        ]
+      },
+      "signal-green": {
+        "role": "tertiary",
+        "displayName": "Signal Green",
+        "canonical": "#3dd68c",
+        "tonalRamp": [
+          "#06281a",
+          "#0b4a30",
+          "#106b46",
+          "#16905f",
+          "#22b478",
+          "#3dd68c",
+          "#84e8b8",
+          "#ccf7e2"
+        ]
+      },
+      "amber": {
+        "role": "tertiary",
+        "displayName": "Amber",
+        "canonical": "#f0c000",
+        "tonalRamp": [
+          "#2b2200",
+          "#4d3d00",
+          "#705900",
+          "#947600",
+          "#b89300",
+          "#f0c000",
+          "#f7dc66",
+          "#fdf1b8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "data": {
+        "displayName": "Data",
+        "purpose": "Dates, counts, page numbers, brief indices. Tabular numerals only."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Stats strip labels and source names."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "linear",
+        "purpose": "120ms linear on background, color and border. No transform animation."
+      }
+    ],
+    "breakpoints": [{ "name": "md", "value": "900px" }]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The only filled button on the page: export the selected items as Markdown.",
+      "html": "<button class=\"ds-btn-primary\">导出 Markdown</button>",
+      "css": ".ds-btn-primary { height: 30px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--accent-strong, #5e6ad2); border-radius: 7px; background: var(--accent-strong, #5e6ad2); color: #fff; font: 500 13px/1 -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; cursor: pointer; transition: background .12s linear, border-color .12s linear; } .ds-btn-primary:hover { background: #4e5bbf; border-color: #4e5bbf; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(124,134,232,.38); } .ds-btn-primary:disabled { opacity: .4; cursor: default; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Toolbar and pagination actions: select page, clear, prev/next.",
+      "html": "<button class=\"ds-btn-ghost\"><svg viewBox=\"0 0 16 16\" width=\"13\" height=\"13\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9.5 3.5 5 8l4.5 4.5\"></path></svg>上一页</button>",
+      "css": ".ds-btn-ghost { height: 30px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line, #262626); border-radius: 7px; background: transparent; color: var(--muted, #8b8b8b); font: 500 13px/1 -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; cursor: pointer; transition: background .12s linear, color .12s linear, border-color .12s linear; } .ds-btn-ghost:hover { color: var(--text, #f5f5f5); background: var(--surface, #141414); border-color: var(--line-strong, #3a3a3a); } .ds-btn-ghost:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(124,134,232,.38); }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Debounced filter over title, summary and source.",
+      "html": "<div class=\"ds-search\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"7\" cy=\"7\" r=\"4.5\"></circle><path d=\"M10.6 10.6 14 14\"></path></svg><input type=\"search\" placeholder=\"搜标题、摘要、来源…\" aria-label=\"搜索条目\"></div>",
+      "css": ".ds-search { position: relative; display: flex; align-items: center; } .ds-search svg { position: absolute; left: 10px; width: 13px; height: 13px; fill: none; stroke: var(--muted, #8b8b8b); stroke-width: 1.5; stroke-linecap: round; pointer-events: none; } .ds-search input { height: 30px; width: 260px; padding: 0 11px 0 30px; background: var(--card, #0a0a0a); border: 1px solid var(--line, #262626); border-radius: 7px; color: var(--text, #f5f5f5); font: 400 13px/1 -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; outline: none; transition: border-color .12s linear, box-shadow .12s linear; } .ds-search input::placeholder { color: var(--muted, #8b8b8b); } .ds-search input:focus { border-color: var(--accent, #7c86e8); box-shadow: 0 0 0 3px rgba(124,134,232,.38); }"
+    },
+    {
+      "name": "Tier Chip",
+      "kind": "chip",
+      "refersTo": "chip-tier",
+      "description": "Source tier label: official, media, aggregator. Color is the hierarchy.",
+      "html": "<span class=\"ds-chip ds-chip-official\">官方源</span> <span class=\"ds-chip ds-chip-media\">媒体源</span> <span class=\"ds-chip ds-chip-aggregator\">聚合源</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 4px; font: 500 11px/1 -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; } .ds-chip-official { color: var(--signal-green, #3dd68c); background: rgba(61,214,140,.18); } .ds-chip-media { color: var(--amber, #f0c000); background: rgba(240,192,0,.18); } .ds-chip-aggregator { color: var(--accent, #7c86e8); background: rgba(124,134,232,.2); }"
+    },
+    {
+      "name": "List Row",
+      "kind": "custom",
+      "refersTo": "list-row",
+      "description": "The signature component: one item in the pool, five columns, selected state by background only.",
+      "html": "<div class=\"ds-row\"><input type=\"checkbox\" class=\"ds-ck\" checked aria-label=\"选中\"><div class=\"ds-src\">量子位</div><div class=\"ds-t\"><a href=\"#\">英伟达团队基于 MiniMax H3 开源视频增强方案</a><div class=\"ds-sm\">摘要单行截断，最多一行。</div></div><div class=\"ds-d\">2026-10-30</div><span class=\"ds-ext\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M5 11 11 5\"></path><path d=\"M6 5h5v5\"></path></svg></span></div>",
+      "css": ".ds-row { display: grid; grid-template-columns: 24px 96px 1fr 88px 18px; gap: 12px; align-items: start; padding: 11px 16px; background: rgba(94,106,210,.16); border-bottom: 1px solid rgba(38,38,38,.9); font: 400 13px/1.5 -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; } .ds-ck { appearance: none; width: 15px; height: 15px; margin: 2px 0 0; border: 1.5px solid #5e6ad2; border-radius: 4px; background: #5e6ad2 url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 8'%3E%3Cpath d='M1 4.2 3.6 6.8 9 1.4' fill='none' stroke='%23fff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\") center/8px 6px no-repeat; cursor: pointer; } .ds-src { font-size: 11px; line-height: 1.5; color: var(--muted, #8b8b8b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-t { min-width: 0; } .ds-t a { font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--text, #f5f5f5); text-decoration: none; } .ds-t a:hover { color: var(--accent, #7c86e8); text-decoration: underline; text-underline-offset: 3px; } .ds-sm { font-size: 12px; line-height: 1.5; color: var(--muted, #8b8b8b); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-d { font: 400 11px/1.5 ui-monospace, 'SF Mono', Consolas, monospace; font-variant-numeric: tabular-nums; color: var(--muted, #8b8b8b); text-align: right; white-space: nowrap; } .ds-ext { display: flex; justify-content: flex-end; padding-top: 2px; color: #3a3a3a; } .ds-ext svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }"
+    },
+    {
+      "name": "Brief Nav Item",
+      "kind": "nav",
+      "refersTo": "list-row",
+      "description": "Sidebar entry in the brief view: mono index plus two-line title.",
+      "html": "<button class=\"ds-navitem active\"><span class=\"ds-n\">01</span><span class=\"ds-nt\">OpenAI 发布新的 Model Spec</span></button>",
+      "css": ".ds-navitem { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: start; width: 100%; padding: 8px 8px 8px 10px; border: 0; border-radius: 8px; background: rgba(94,106,210,.16); text-align: left; font: inherit; color: inherit; cursor: pointer; margin-bottom: 2px; } .ds-n { font: 400 11px/1.6 ui-monospace, 'SF Mono', Consolas, monospace; font-variant-numeric: tabular-nums; color: var(--accent, #7c86e8); } .ds-nt { font-size: 13px; line-height: 1.4; color: var(--text, #f5f5f5); font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Wire Desk",
+    "overview": "通讯社的编辑台：原始电讯按时间铺在桌上，来源和时间戳并排可比，编辑自己挑哪条留下。界面不替你判断价值，它只保证每一条都在同一视线里公平出现。这套系统是 Operate 型：用户来完成扫一遍、勾几条、导出的任务，不是被说服。所以表达欲全部让位于扫描效率：纯黑底、中性灰层次、一个强调色，密度高、边框细、没有阴影、没有装饰性动效。品牌的个性藏在精度里——等宽数字对齐、时间列右对齐、选中态只用底色和勾选框。",
+    "keyCharacteristics": [
+      "纯黑（#000000）+ 三级中性灰，层次靠明度差不靠色相",
+      "单一强调色，且分成填充与文字两个亮度档",
+      "零阴影、零渐变、零发光；深度只由 1px 边框与底色差表达",
+      "数据（时间、计数、序号）一律等宽 + tabular-nums",
+      "图标是手绘 SVG 线性图标，不用字形代替"
+    ],
+    "rules": [
+      {
+        "name": "The One Voice Rule",
+        "body": "强调色只出现在链接、选中态、聚焦环和聚合源标签上；一屏之内彩色面积不超过 5%，它的稀缺就是它的意义。",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Tone Accent Rule",
+        "body": "填充永远用 #5e6ad2（白字可读），文字永远用 #7c86e8（黑底可读）。两者不可互换。",
+        "section": "colors"
+      },
+      {
+        "name": "The Data-Is-Mono Rule",
+        "body": "等宽只用于数字与时间。正文、标题、按钮一律用 UI 字，不用等宽装技术感。",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "任何会变化的数字（计数、页码、日期）必须 font-variant-numeric: tabular-nums，否则滚动时会跳动。",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Glow Rule",
+        "body": "禁止零偏移彩色光晕。任何 box-shadow 不得带色相。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 用 #7c86e8 做文字强调、#5e6ad2 做填充；两档不可互换。",
+      "Do 数字用 tabular-nums，日期列右对齐。",
+      "Do 深度用 1px 边框和底色差表达。",
+      "Do 图标手绘 SVG，1.4–1.5px 描边、圆头圆角。",
+      "Do 选中态用底色 + 勾选框，一屏能一眼看出选了哪些。"
+    ],
+    "donts": [
+      "Don't 用蓝紫底或任何带色相的深色背景；底就是 #000000。",
+      "Don't 用零偏移彩色光晕、渐变文字、玻璃模糊。",
+      "Don't 在列表项或卡片上加彩色左边条。",
+      "Don't 用 emoji / Unicode 字形当图标。",
+      "Don't 把页面改成营销落地页：没有 hero、没有卖点三栏、没有 CTA 区。",
+      "Don't 用大留白换高级感；这个界面的货币是密度。"
+    ]
+  }
+}

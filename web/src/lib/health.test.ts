@@ -52,7 +52,7 @@ describe("computeHealth", () => {
   });
 
   it("flags a stale source older than the threshold", () => {
-    const old = new Date(Date.now() - (STALE_DAYS + 10) * 86_400_000).toISOString();
+    const old = new Date(new Date(NOW).getTime() - (STALE_DAYS + 10) * 86_400_000).toISOString();
     const rows = computeHealth(
       [makeSource({ id: "s1", name: "Stale" })],
       [makeItem({ source_id: "s1", published: old })],

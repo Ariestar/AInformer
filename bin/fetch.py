@@ -154,6 +154,10 @@ def load_config() -> dict:
 def _fetch_source(src, *, cutoff, blacklist, timeout, ua, cap, now):
     """抓取单个源并做窗口/黑名单过滤。线程安全：只读写自己的局部状态。"""
     sid = src["id"]
+    # 允许单源覆盖全局上限（如 arXiv 每天上百条，需要单独压量）。
+    limit = src.get("max_per_source", cap)
+    # 允许单源覆盖 UA：Substack 等会拦截非浏览器 UA。
+    ua = src.get("user_agent", ua)
     rec = {"id": sid, "name": src["name"], "ok": False, "fetched": 0, "kept": 0, "error": None}
     try:
         blob = fetch_bytes(src["url"], timeout, ua)
@@ -174,7 +178,7 @@ def _fetch_source(src, *, cutoff, blacklist, timeout, ua, cap, now):
         hay = (e["title"] + " " + e["summary"]).lower()
         if any(w in hay for w in blacklist):
             continue
-        if len(kept_items) >= cap:
+        if len(kept_items) >= limit:
             break
         kept_items.append(
             {
