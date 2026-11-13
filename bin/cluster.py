@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""cluster.py —— 事件归并：召回 →（agent 判定）→ 校验 → 合并
+"""cluster.py —— 事件归并：召回 → LLM 判定 → 校验 → 合并
 
 职责边界：只做「这条资讯属于哪个事件」的机械部分。
-不判断同一性（那是 agent 的外部产物），不排序、不打分、不筛选、不删条目。
+不判断同一性（那是模型的事），不排序、不打分、不筛选、不删条目。
 
 三个模式：
-    cluster.py prepare   召回候选对，切批写进 .work/inbox/，复制任务契约
-    cluster.py merge     校验 outbox 契约 + 合并成 data/clusters.json
-    cluster.py eval      对人工标注算 precision / recall / 错合并数
+    cluster.py prepare   召回候选对，切批写进 .work/inbox/
+    cluster.py judge     调 LLM 判定候选对，写 .work/outbox/
+    cluster.py merge     校验 outbox + 合并成 data/clusters.json
 
 设计说明：
     - 条目只增不减：n 条进，n 条出，分进若干事件，覆盖率必须 100%。
@@ -40,7 +40,6 @@ ROOT = Path(__file__).resolve().parent.parent
 ITEMS_PATH = ROOT / "data" / "items.json"
 WORK = ROOT / ".work"
 CLUSTERS_PATH = ROOT / "data" / "clusters.json"
-CONTRACT_SRC = ROOT / "docs" / "事件归并契约.md"
 
 TIER_RANK = {"official": 0, "media": 1, "aggregator": 2}
 MERGE_THRESHOLD = 0.85
@@ -251,6 +250,9 @@ def recall(
                 continue
             if abs((x["t"] - y["t"]).total_seconds()) / 3600 > hours:
                 continue
+            # 通道一已丢弃的同一栏目不同期，这里不能再加回来；计数以通道一为准。
+            if not keep_serial and x["core"] == y["core"] and not same_day(x["t"], y["t"]):
+                continue
             pid = pair_id(x["it"]["url"], y["it"]["url"])
             co[pid] = co.get(pid, 0) + 1
             score, a, b = cands.get(pid, (0.0, x["it"], y["it"]))
@@ -296,8 +298,6 @@ def cmd_prepare(args) -> int:
     items = raw.get("items") if isinstance(raw, dict) else raw
     if not items:
         die(f"{src} 里没有条目", 2)
-    if not CONTRACT_SRC.exists():
-        die(f"缺少任务契约 {CONTRACT_SRC}", 2)
 
     work = Path(args.work)
     cands, dropped_serial, unpairable = recall(
@@ -309,7 +309,6 @@ def cmd_prepare(args) -> int:
         if d.exists():
             shutil.rmtree(d)
         d.mkdir(parents=True)
-    shutil.copyfile(CONTRACT_SRC, work / "CONTRACT.md")
 
     index: dict[str, list[str]] = {}
     for n, (_score, pid, a, b) in enumerate(pairs):
@@ -357,16 +356,9 @@ def cmd_prepare(args) -> int:
         print(f"  丢弃 {dropped_serial} 对「同一栏目不同期」")
     if unpairable:
         print(f"  标题无实义、归并为单例：{len(unpairable)} 条（{unpairable[0]['source']} 等）")
-    print(f"写入 {rel(work)}/inbox、manifest.json、CONTRACT.md")
-    cwd = rel(work)
-    task = (
-        "读 CONTRACT.md，只处理 inbox/batch-001.jsonl，把结果写进 outbox/batch-001.jsonl。"
-        "不要联网，不要修改其它文件，处理完就退出。"
-    )
-    print("\n下一步（让 agent 判定。先跑一个批次看质量，再放全量）：")
-    print(f'  cd {cwd} && dsh headless "{task}"')
-    print("  全部批次：把 batch-001 换成 batch-*")
-    print("\n然后： uv run python bin/cluster.py merge")
+    print(f"写入 {rel(work)}/inbox、manifest.json")
+    print("\n下一步： uv run python bin/cluster.py judge")
+    print("然后：   uv run python bin/cluster.py merge")
     return 0
 
 
@@ -433,6 +425,8 @@ def load_decisions(work: Path) -> tuple[dict[str, dict], list[str]]:
 def cmd_merge(args) -> int:
     work = Path(args.work)
     manifest = load_manifest(work)
+    if not manifest["items"]:
+        die("manifest 里没有条目 —— 先跑 bin/cluster.py prepare", 2)
     index = manifest["pairs_index"]
 
     expected: dict[str, str] = {}
@@ -440,23 +434,25 @@ def cmd_merge(args) -> int:
         for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 expected[json.loads(line)["pair_id"]] = path.name
-    if not expected:
-        die(f"{work / 'inbox'} 里没有候选对 —— 先跑 prepare", 2)
 
-    decisions, problems = load_decisions(work)
-    missing_files = [
-        name for name in sorted(set(expected.values())) if not (work / "outbox" / name).exists()
-    ]
-    unknown = set(decisions) - set(expected)
-    missing = set(expected) - set(decisions)
-    if unknown:
-        problems.append(
-            f"出现 {len(unknown)} 个不属于任何批次的 pair_id，例：{sorted(unknown)[:3]}"
-        )
-    if missing:
-        problems.append(f"缺 {len(missing)} 条决策，例：{sorted(missing)[:3]}")
-    if missing_files:
-        problems.append(f"缺 {len(missing_files)} 个输出文件：{missing_files[:5]}")
+    if not expected:
+        print("没有候选对，全部条目按单例处理。")
+        decisions, problems = {}, []
+    else:
+        decisions, problems = load_decisions(work)
+        missing_files = [
+            name for name in sorted(set(expected.values())) if not (work / "outbox" / name).exists()
+        ]
+        unknown = set(decisions) - set(expected)
+        missing = set(expected) - set(decisions)
+        if unknown:
+            problems.append(
+                f"出现 {len(unknown)} 个不属于任何批次的 pair_id，例：{sorted(unknown)[:3]}"
+            )
+        if missing:
+            problems.append(f"缺 {len(missing)} 条决策，例：{sorted(missing)[:3]}")
+        if missing_files:
+            problems.append(f"缺 {len(missing_files)} 个输出文件：{missing_files[:5]}")
 
     print(f"候选对 {len(expected)} · 已判定 {len(decisions)} · 批次 {len(set(expected.values()))}")
     if problems:
@@ -465,15 +461,18 @@ def cmd_merge(args) -> int:
             print(f"  - {p}", file=sys.stderr)
         if len(problems) > 25:
             print(f"  … 另有 {len(problems) - 25} 处", file=sys.stderr)
-        print("\n未通过校验。让 agent 重跑对应批次，不要手工改 outbox。", file=sys.stderr)
+        print("\n未通过校验。修正 outbox 后重跑 merge。", file=sys.stderr)
         return 3
 
-    yes = sum(1 for d in decisions.values() if d["same_event"])
-    confs = sorted(d["confidence"] for d in decisions.values())
-    print(f"契约通过 · 判同一事件 {yes} · 判不同 {len(decisions) - yes}")
-    print(
-        f"  置信度 中位 {confs[len(confs) // 2]:.2f} · 最低 {confs[0]:.2f} · 最高 {confs[-1]:.2f}"
-    )
+    if decisions:
+        yes = sum(1 for d in decisions.values() if d["same_event"])
+        confs = sorted(d["confidence"] for d in decisions.values())
+        print(f"契约通过 · 判同一事件 {yes} · 判不同 {len(decisions) - yes}")
+        print(
+            f"  置信度 中位 {confs[len(confs) // 2]:.2f} · 最低 {confs[0]:.2f} · 最高 {confs[-1]:.2f}"
+        )
+    else:
+        print("契约通过 · 无候选对")
 
     url_to_id = {it["url"]: it["id"] for it in manifest["items"]}
     by_id = {it["id"]: it for it in manifest["items"]}
@@ -599,78 +598,6 @@ def cmd_merge(args) -> int:
     return 0
 
 
-# ---------------------------------------------------------------- 评测
-def cmd_eval(args) -> int:
-    work = Path(args.work)
-    manifest = load_manifest(work)
-    decisions, _ = load_decisions(work)
-    labels = Path(args.labels)
-    if not labels.exists():
-        die(f"找不到标注文件 {labels}", 2)
-
-    url_pair_to_pid = {tuple(sorted(v)): k for k, v in manifest["pairs_index"].items()}
-
-    tp = fp = fn = tn = 0
-    not_candidate: list[tuple[str, str, int]] = []
-    wrong_merge: list[tuple[str, str]] = []
-    missed: list[tuple[str, str]] = []
-
-    for lineno, line in enumerate(labels.read_text(encoding="utf-8").splitlines(), 1):
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        parts = line.split("\t")
-        if len(parts) < 3:
-            print(f"  跳过第 {lineno} 行：需要 url_a\\turl_b\\tsame", file=sys.stderr)
-            continue
-        ua, ub, gold = parts[0].strip(), parts[1].strip(), parts[2].strip()
-        if gold not in {"0", "1"}:
-            print(f"  跳过第 {lineno} 行：same 只能是 0 或 1", file=sys.stderr)
-            continue
-        want = gold == "1"
-        pid = url_pair_to_pid.get(tuple(sorted([ua, ub])))
-        if not pid or pid not in decisions:
-            not_candidate.append((ua, ub, int(want)))
-            if want:
-                fn += 1
-            continue
-        got = decisions[pid]["same_event"]
-        if got and want:
-            tp += 1
-        elif got and not want:
-            fp += 1
-            wrong_merge.append((ua, ub))
-        elif not got and want:
-            fn += 1
-            missed.append((ua, ub))
-        else:
-            tn += 1
-
-    total = tp + fp + fn + tn
-    prec = tp / (tp + fp) if tp + fp else 0.0
-    rec = tp / (tp + fn) if tp + fn else 0.0
-    print(
-        f"标注 {total + len(not_candidate)} 对，其中判定 {total} 对 · TP {tp} FP {fp} FN {fn} TN {tn}"
-    )
-    print(f"  precision {prec:.3f} · recall {rec:.3f} · 错合并 {fp}")
-    if not_candidate:
-        same = sum(1 for x in not_candidate if x[2])
-        print(
-            f"  未进入候选对 {len(not_candidate)}（其中本该合并的 {same}）—— 召回的锅，不是 agent 的"
-        )
-    if wrong_merge:
-        print("\n  错合并（最严重，优先修）：")
-        for ua, ub in wrong_merge[:5]:
-            print(f"   - {ua[:60]}  ×  {ub[:60]}")
-    if missed:
-        print("\n  漏合并（可接受）：")
-        for ua, ub in missed[:5]:
-            print(f"   - {ua[:60]}  ×  {ub[:60]}")
-    if fp == 0 and total:
-        print("\n  错合并为 0 —— 达到上线门槛。")
-    return 0
-
-
 # ---------------------------------------------------------------- LLM 判定
 JUDGE_SYSTEM = (
     "你是新闻事件归并判断器。给定若干对资讯，判断每一对是否在报道同一个事件。\n"
@@ -719,7 +646,7 @@ def judge_batch(pairs: list[dict], settings: config.Settings) -> dict[str, dict]
             and isinstance(d.get("confidence"), (int, float))
             and 0 <= d["confidence"] <= 1
         ):
-            same = d["same_event"] and not (d["same_event"] and d["confidence"] < 0.85)
+            same = d["same_event"] and d["confidence"] >= 0.85
             conf = round(float(d["confidence"]), 3)
         else:
             same, conf = False, 0.5  # 保守默认：不合并
@@ -735,9 +662,10 @@ def cmd_judge(args) -> int:
     work = Path(args.work)
     inbox = work / "inbox"
     outbox = work / "outbox"
-    cache_path = work / "judge_cache.json"
 
     settings = config.load(require_base_url=False)
+    cache_key = hashlib.sha1(f"{settings.llm_model}\n{JUDGE_SYSTEM}".encode()).hexdigest()[:8]
+    cache_path = work / f"judge_cache_{cache_key}.json"
     if not settings.llm_api_key:
         print("未配置 LLM_API_KEY，judge 需要模型判定。", file=sys.stderr)
         return 2
@@ -759,13 +687,29 @@ def cmd_judge(args) -> int:
             if line.strip()
         ]
         todo = [p for p in pairs if p["pair_id"] not in cache]
+        batch_decisions = dict(cache)
         if todo:
-            decisions = judge_batch(todo, settings)
-            cache.update(decisions)
+            try:
+                decisions = judge_batch(todo, settings)
+            except ValueError as exc:
+                # 模型输出格式坏掉：整批按不合并处理，但不写缓存，下一轮会重试。
+                print(f"  {path.name} 判定输出无效（{exc}），整批暂按不合并", file=sys.stderr)
+                decisions = {
+                    p["pair_id"]: {
+                        "pair_id": p["pair_id"],
+                        "same_event": False,
+                        "confidence": 0.5,
+                        "reason": "",
+                    }
+                    for p in todo
+                }
+            else:
+                cache.update(decisions)
+            batch_decisions.update(decisions)
             judged += len(todo)
         lines = []
         for p in pairs:
-            d = cache.get(p["pair_id"])
+            d = batch_decisions.get(p["pair_id"])
             if not d:
                 print(f"  缺判定 {p['pair_id']}", file=sys.stderr)
                 return 3
@@ -779,7 +723,7 @@ def cmd_judge(args) -> int:
 
 # ---------------------------------------------------------------- 入口
 def main() -> int:
-    ap = argparse.ArgumentParser(description="事件归并：召回 / 合并 / 评测")
+    ap = argparse.ArgumentParser(description="事件归并：召回 / 判定 / 合并")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("prepare", help="召回候选对，切批写进 .work/")
@@ -803,11 +747,6 @@ def main() -> int:
     j = sub.add_parser("judge", help="用 LLM 判定 .work/inbox 里的候选对")
     j.add_argument("--work", default=str(WORK))
     j.set_defaults(func=cmd_judge)
-
-    e = sub.add_parser("eval", help="对人工标注算准确率")
-    e.add_argument("--work", default=str(WORK))
-    e.add_argument("--labels", default=str(ROOT / "regression" / "pairs.tsv"))
-    e.set_defaults(func=cmd_eval)
 
     args = ap.parse_args()
     return args.func(args)

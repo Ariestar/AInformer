@@ -1,5 +1,8 @@
+import json
 from collections import Counter
+from types import SimpleNamespace
 
+import cluster
 from cluster import cap_pairs, pair_id, recall
 
 
@@ -50,6 +53,51 @@ class TestRecall:
         cands, dropped, _ = recall(items, 48, 0.3, 3, 12, False)
         assert len(cands) == 0
         assert dropped == 1
+
+    def test_keep_serial_retains_digest_pair(self):
+        # 数字不同导致三元组相似度低，只有通道二靠共享专名命中
+        items = [
+            make_item(
+                "https://a.com/1", f"Gemini 早报 {'1' * 24}", published="2026-10-24T00:00:00+00:00"
+            ),
+            make_item(
+                "https://a.com/2", f"Gemini 早报 {'2' * 24}", published="2026-10-26T00:00:00+00:00"
+            ),
+        ]
+        cands, dropped, _ = recall(items, 48, 0.3, 3, 12, False)
+        assert len(cands) == 0
+        assert dropped == 1
+
+        kept, kept_dropped, _ = recall(items, 48, 0.3, 3, 12, True)
+        assert pair_id("https://a.com/1", "https://a.com/2") in kept
+        assert kept_dropped == 0
+
+
+class TestJudgeFallback:
+    def test_invalid_output_writes_negative_without_cache(self, tmp_path, monkeypatch):
+        work = tmp_path / "work"
+        (work / "inbox").mkdir(parents=True)
+        rec = {"pair_id": "p1", "a": {"url": "https://a.com/1"}, "b": {"url": "https://a.com/2"}}
+        (work / "inbox" / "batch-001.jsonl").write_text(json.dumps(rec) + "\n", encoding="utf-8")
+        monkeypatch.setattr(
+            cluster,
+            "judge_batch",
+            lambda pairs, settings: (_ for _ in ()).throw(ValueError("bad json")),
+        )
+        monkeypatch.setattr(
+            cluster.config,
+            "load",
+            lambda **_: SimpleNamespace(
+                llm_api_key="test", llm_model="stub", llm_base_url="http://127.0.0.1"
+            ),
+        )
+
+        assert cluster.cmd_judge(SimpleNamespace(work=str(work))) == 0
+        decision = json.loads((work / "outbox" / "batch-001.jsonl").read_text(encoding="utf-8"))
+        assert decision["same_event"] is False
+        cache_files = list(work.glob("judge_cache_*.json"))
+        if cache_files:
+            assert "p1" not in json.loads(cache_files[0].read_text(encoding="utf-8"))
 
 
 class TestCapPairs:
