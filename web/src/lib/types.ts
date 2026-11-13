@@ -13,20 +13,29 @@ export interface Item {
   url: string;
   published: string | null;
   summary: string;
-  cluster_id: string;
   event_id: string;
-  event_size: number;
   is_primary: boolean;
   weight: number;
 }
 
-export interface SourceHealth {
+export type SourceState = "ok" | "error" | "stale" | "empty";
+
+// 源健康由 bin/export.py 算好，前端只渲染。
+export interface SourceRow {
   id: string;
   name: string;
-  ok: boolean;
-  fetched: number;
+  state: SourceState;
   kept: number;
+  newest: string | null;
+  staleDays: number;
   error: string | null;
+}
+
+export interface HealthSummary {
+  total: number;
+  problemCount: number;
+  alerts: string[];
+  rows: SourceRow[];
 }
 
 export interface Stats {
@@ -40,7 +49,7 @@ export interface PoolPayload {
   generated_at: string;
   window_days: number;
   stats: Stats;
-  sources: SourceHealth[];
+  health: HealthSummary;
   items: Item[];
 }
 

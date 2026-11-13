@@ -1,4 +1,4 @@
-from daily import apply_mapping, classify, latest_day, select_today
+from daily import apply_mapping, latest_day, select_today
 
 
 def cluster(day, title="无标题", size=1, primary="p1"):
@@ -17,26 +17,6 @@ def cluster(day, title="无标题", size=1, primary="p1"):
             }
         ],
     }
-
-
-class TestClassify:
-    def test_product_by_launch_word(self):
-        assert classify("OpenAI 发布 GPT-6") == "product"
-
-    def test_english_model_release_is_product(self):
-        assert classify("Gemini 4 Carbon: Our next frontier model") == "product"
-
-    def test_research_by_paper(self):
-        assert classify("一篇论文提出新的训练方法") == "research"
-
-    def test_business_by_funding(self):
-        assert classify("某公司完成 1 亿美元融资") == "business"
-
-    def test_policy_by_regulation(self):
-        assert classify("欧盟通过新的监管法案") == "policy"
-
-    def test_fallback_to_other(self):
-        assert classify("一家公司换了个 logo") == "other"
 
 
 class TestSelectToday:
@@ -63,9 +43,8 @@ class TestApplyMapping:
 
     def test_falls_back_on_invalid_category(self):
         c = cluster("2026-10-29", title="某公司融资")
-        # 模型给了非法类别，应落到启发式（标题含「融资」→ business）
-        assert apply_mapping([c], {"e1": "bogus"}) == {"e1": "business"}
+        assert apply_mapping([c], {"e1": "bogus"}) == {"e1": "other"}
 
     def test_falls_back_on_missing_key(self):
         c = cluster("2026-10-29", title="某公司融资")
-        assert apply_mapping([c], {}) == {"e1": "business"}
+        assert apply_mapping([c], {}) == {"e1": "other"}

@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { groupItems } from "../lib/events";
 import { fmtDate, tierName } from "../lib/format";
-import { computeHealth } from "../lib/health";
 import { type FilterState, filterItems, initialFilter, sourceOptions } from "../lib/select";
 import type {
   DailyPayload,
+  HealthSummary,
   Item,
   PoolPayload,
   PoolView,
-  SourceHealth,
   Stats,
   ViewMode,
 } from "../lib/types";
@@ -72,8 +71,7 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [split, setSplit] = useState<Set<string>>(() => new Set());
   const [restored, setRestored] = useState(false);
-  const [healthSources, setHealthSources] = useState<SourceHealth[]>([]);
-  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [health, setHealth] = useState<HealthSummary | null>(null);
 
   useEffect(() => {
     setSelected(loadSelection());
@@ -98,8 +96,7 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
       .then((payload) => {
         if (ctrl.signal.aborted) return;
         setItems(payload.items);
-        setHealthSources(payload.sources ?? []);
-        setGeneratedAt(payload.generated_at);
+        setHealth(payload.health);
         setLoaded(true);
         // 旧数据里勾选过、新数据里已不存在的 id 清掉，避免存储无限增长。
         const ids = new Set(payload.items.map((it) => it.id));
@@ -214,10 +211,6 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   const selectedItems = useMemo(() => items.filter((it) => selected.has(it.id)), [items, selected]);
   const sources = useMemo(() => sourceOptions(items), [items]);
   const groups = useMemo(() => groupItems(visible, split), [visible, split]);
-  const health = useMemo(
-    () => (generatedAt ? computeHealth(healthSources, items, generatedAt) : null),
-    [healthSources, items, generatedAt],
-  );
 
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const paged = useMemo(

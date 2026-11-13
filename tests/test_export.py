@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from export import cluster_id, item_id, to_export, validate
+from export import item_id, to_export, validate
 
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schema" / "pool.schema.json"
 SCHEMA = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
@@ -34,9 +34,7 @@ EXPORT_FIELDS = {
     "url",
     "published",
     "summary",
-    "cluster_id",
     "event_id",
-    "event_size",
     "is_primary",
     "weight",
 }
@@ -51,14 +49,6 @@ class TestItemId:
 
     def test_differs_for_different_url(self):
         assert item_id("https://a.com/1") != item_id("https://a.com/2")
-
-
-class TestClusterId:
-    def test_same_title_clusters(self):
-        assert cluster_id("Hello, World!") == cluster_id("hello world")
-
-    def test_different_title_differs(self):
-        assert cluster_id("Alpha") != cluster_id("Beta")
 
 
 class TestToExport:
@@ -76,24 +66,25 @@ class TestEvents:
     def test_no_clusters_makes_singletons(self):
         item = to_export(RAW, {})["items"][0]
         assert item["event_id"] == item["id"]
-        assert item["event_size"] == 1
         assert item["is_primary"] is True
 
     def test_cluster_merges_members(self):
-        events = {"https://a.com/1": ("e1", 2, True)}
+        events = {"https://a.com/1": ("e1", True)}
         item = to_export(RAW, events)["items"][0]
         assert item["event_id"] == "e1"
-        assert item["event_size"] == 2
         assert item["is_primary"] is True
 
-    def test_sources_passthrough(self):
-        raw = dict(
-            RAW,
-            sources=[
+    def test_health_is_derived_not_passthrough(self):
+        raw = {
+            **RAW,
+            "items": [{**RAW["items"][0], "published": "2026-10-28T00:00:00+00:00"}],
+            "sources": [
                 {"id": "s", "name": "Source", "ok": True, "fetched": 1, "kept": 1, "error": None}
             ],
-        )
-        assert to_export(raw, {})["sources"][0]["id"] == "s"
+        }
+        payload = to_export(raw, {})
+        assert "sources" not in payload
+        assert payload["health"]["rows"][0]["state"] == "ok"
 
 
 class TestValidate:

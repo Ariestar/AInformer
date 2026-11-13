@@ -19,7 +19,10 @@ import hashlib
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
+
+import source_health
 
 ROOT = Path(__file__).resolve().parent.parent
 ITEMS_PATH = ROOT / "data" / "items.json"
@@ -146,17 +149,8 @@ def item_id(url: str) -> str:
     return hashlib.sha1(url.encode("utf-8")).hexdigest()[:12]
 
 
-def cluster_id(title: str) -> str:
-    """同一事件的不同报道通常标题措辞不同，这里只合并标题指纹完全一致的情况。
-
-    宁可少合并，也不把两件事塞进一个簇 —— 合并错了比不合并更糟。
-    """
-    fingerprint = re.sub(r"[\s\W_]+", "", title.lower())[:40]
-    return hashlib.sha1(fingerprint.encode("utf-8")).hexdigest()[:8]
-
-
-def load_events(path: Path) -> dict[str, tuple[str, int, bool]]:
-    """读 bin/cluster.py 的合并结果，返回 url → (event_id, size, is_primary)。
+def load_events(path: Path) -> dict[str, tuple[str, bool]]:
+    """读 bin/cluster.py 的合并结果，返回 url → (event_id, is_primary)。
 
     没有 clusters.json 时返回空表 —— 每条条目退化成独立事件，导出照常，
     不会因为合并层没跑就中断构建。
@@ -164,18 +158,18 @@ def load_events(path: Path) -> dict[str, tuple[str, int, bool]]:
     if not path.exists():
         return {}
     data = json.loads(path.read_text(encoding="utf-8"))
-    out: dict[str, tuple[str, int, bool]] = {}
+    out: dict[str, tuple[str, bool]] = {}
     for c in data.get("clusters", []):
         for m in c.get("members", []):
-            out[m["url"]] = (c["event_id"], c["size"], m["id"] == c["primary"])
+            out[m["url"]] = (c["event_id"], m["id"] == c["primary"])
     return out
 
 
-def to_export(raw: dict, events: dict[str, tuple[str, int, bool]]) -> dict:
+def to_export(raw: dict, events: dict[str, tuple[str, bool]]) -> dict:
     items = []
     for it in raw["items"]:
         url = it["url"]
-        event_id, size, is_primary = events.get(url, (item_id(url), 1, True))
+        event_id, is_primary = events.get(url, (item_id(url), True))
         items.append(
             {
                 "id": item_id(url),
@@ -186,19 +180,20 @@ def to_export(raw: dict, events: dict[str, tuple[str, int, bool]]) -> dict:
                 "url": url,
                 "published": it.get("published"),
                 "summary": it.get("summary", ""),
-                "cluster_id": cluster_id(it["title"]),
                 "event_id": event_id,
-                "event_size": size,
                 "is_primary": is_primary,
                 "weight": float(it.get("weight", 0.5)),
             }
         )
 
+    generated_at = datetime.fromisoformat(raw["generated_at"])
     return {
         "generated_at": raw["generated_at"],
         "window_days": raw["window_days"],
         "stats": raw["stats"],
-        "sources": raw.get("sources", []),
+        "health": source_health.summarize(
+            raw.get("sources", []), raw["items"], generated_at, raw["window_days"]
+        ),
         "items": items,
     }
 

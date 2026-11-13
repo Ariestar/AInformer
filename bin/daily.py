@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""daily.py —— 生成当天日报：把最新一天的事件按主题分五类，每类配一段概述。
+"""daily.py —— 生成当天日报：把最新一天的事件按主题分六类，每类配一段概述。
 
-分类和概述有两种模式：
-    - 配置了 LLM_API_KEY：用模型分类 + 写概述（推荐，更准）
-    - 没配 key：退回关键词启发式分类，概述留空（不阻断，站点仍可用）
+没有 LLM_API_KEY 时直接跳过（退出码 0），不生成半成品日报。
 
 职责边界：只做「选今天 + 分类 + 概述 + 组装」，不筛条目、不打重要性分。
 
@@ -27,6 +25,7 @@ from pathlib import Path
 
 import config
 import llm
+import source_health
 
 ROOT = Path(__file__).resolve().parent.parent
 CLUSTERS_PATH = ROOT / "data" / "clusters.json"
@@ -38,8 +37,6 @@ PUBLIC_OUT = ROOT / "web" / "public" / "data" / "daily.json"
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-STALE_DAYS = 30
-
 SECTIONS = [
     ("product", "产品发布"),
     ("research", "研究进展"),
@@ -49,96 +46,6 @@ SECTIONS = [
     ("other", "其他"),
 ]
 CATEGORIES = {key for key, _name in SECTIONS}
-
-# 启发式关键词：没配 LLM key 时用。命中第一个就归入该类。
-KEYWORDS: dict[str, list[str]] = {
-    "product": [
-        "发布",
-        "上线",
-        "推出",
-        "版本",
-        "更新",
-        "功能",
-        "定价",
-        "开源",
-        "公测",
-        "灰度",
-        "release",
-        "launch",
-        "unveil",
-        "beta",
-        "预览",
-        "上新",
-        "model",
-        "frontier",
-        "模型",
-    ],
-    "research": [
-        "论文",
-        "基准",
-        "benchmark",
-        "arxiv",
-        "研究",
-        "训练",
-        "评测",
-        "方法",
-        "数据集",
-        "science",
-        "证明",
-        "猜想",
-        "paper",
-        "dataset",
-        "training",
-    ],
-    "business": [
-        "融资",
-        "收购",
-        "估值",
-        "上市",
-        "ipo",
-        "财报",
-        "营收",
-        "投资",
-        "人事",
-        "任命",
-        "招股",
-        "s-1",
-        "美元",
-        "募资",
-        "裁员",
-        "funding",
-        "valuation",
-    ],
-    "policy": [
-        "监管",
-        "法案",
-        "合规",
-        "诉讼",
-        "出口管制",
-        "政策",
-        "禁令",
-        "法院",
-        "判",
-        "regulat",
-        "安全施压",
-        "信托",
-    ],
-    "opinion": [
-        "评论",
-        "分析",
-        "预测",
-        "访谈",
-        "观点",
-        "解读",
-        "思考",
-        "怎么看",
-        "长文",
-        "报告",
-        "教程",
-        "总结",
-        "拆解",
-    ],
-}
 
 CLASSIFY_SYSTEM = (
     "你是 AI 新闻分类器。把每条新闻标题分到以下六类之一：\n"
@@ -158,14 +65,6 @@ SUMMARY_SYSTEM = (
 )
 
 
-def classify(title: str) -> str:
-    t = title.lower()
-    for key, _name in SECTIONS[:-1]:  # 不含 other
-        if any(k in t for k in KEYWORDS[key]):
-            return key
-    return "other"
-
-
 def latest_day(clusters: list[dict]) -> str:
     days = [m["published"][:10] for c in clusters for m in c["members"] if m["published"]]
     return max(days) if days else ""
@@ -181,40 +80,17 @@ def select_today(clusters: list[dict], day: str) -> list[dict]:
     return picked
 
 
-def gaps(sources: list[dict], items: list[dict], now: datetime) -> list[str]:
-    newest_by: dict[str, str] = {}
-    for it in items:
-        if not it.get("published"):
-            continue
-        cur = newest_by.get(it["source_id"])
-        if not cur or it["published"] > cur:
-            newest_by[it["source_id"]] = it["published"]
-    out: list[str] = []
-    for s in sources:
-        if not s.get("ok"):
-            out.append(f"{s['name']} 本轮抓取失败")
-            continue
-        newest = newest_by.get(s["id"])
-        if not newest:
-            out.append(f"{s['name']} 60 天内零新增")
-            continue
-        age = (now - datetime.fromisoformat(newest)).days
-        if age > STALE_DAYS:
-            out.append(f"{s['name']} 已 {age} 天未更新")
-    return out
-
-
 def apply_mapping(events: list[dict], raw: dict) -> dict[str, str]:
-    """把模型的分类结果套到事件上，非法/缺失的落到启发式。"""
+    """把模型的分类结果套到事件上，非法/缺失的落到「其他」。"""
     out: dict[str, str] = {}
     for c in events:
         got = raw.get(c["event_id"])
-        out[c["event_id"]] = got if got in CATEGORIES else classify(c["members"][0]["title"])
+        out[c["event_id"]] = got if got in CATEGORIES else "other"
     return out
 
 
 def classify_llm(events: list[dict], settings: config.Settings) -> dict[str, str]:
-    """一次调用分类全部事件，返回 event_id → 类别。非法结果落到启发式。"""
+    """一次调用分类全部事件，返回 event_id → 类别。非法结果落到「其他」。"""
     lines = "\n".join(f"{c['event_id']}: {c['members'][0]['title']}" for c in events)
     raw = llm.chat_json(
         [{"role": "system", "content": CLASSIFY_SYSTEM}, {"role": "user", "content": lines}],
@@ -249,6 +125,10 @@ def main() -> int:
         return 1
 
     settings = config.load(require_base_url=False)
+    if not settings.llm_api_key:
+        print("未配置 LLM_API_KEY，跳过日报。", file=sys.stderr)
+        return 0
+
     clusters = json.loads(CLUSTERS_PATH.read_text(encoding="utf-8"))["clusters"]
     raw = json.loads(ITEMS_PATH.read_text(encoding="utf-8"))
     sources = raw.get("sources", [])
@@ -261,23 +141,19 @@ def main() -> int:
         return 2
 
     today = select_today(clusters, day)
-    use_llm = bool(settings.llm_api_key)
-
-    if use_llm:
-        print(f"模型 {settings.llm_model} @ {settings.llm_base_url}")
-        if args.dry_run:
-            print("分类请求会发给模型：")
-            print("  " + "\n  ".join(f"{c['event_id']}: {c['members'][0]['title']}" for c in today))
-            print("概述请求：每个非空分类一次。")
-            return 0
-        try:
-            mapping = classify_llm(today, settings)
-        except Exception as exc:
-            print(f"LLM 分类失败：{type(exc).__name__}: {exc}", file=sys.stderr)
-            return 1
-    else:
-        print("未配置 LLM_API_KEY，用启发式分类，概述留空。")
-        mapping = {c["event_id"]: classify(c["members"][0]["title"]) for c in today}
+    print(f"模型 {settings.llm_model} @ {settings.llm_base_url}")
+    if args.dry_run:
+        print("分类请求会发给模型：")
+        print("  " + "\n  ".join(f"{c['event_id']}: {c['members'][0]['title']}" for c in today))
+        print("概述请求：每个非空分类一次。")
+        return 0
+    try:
+        mapping = classify_llm(today, settings)
+    except Exception as exc:
+        # 日报是可选产物，失败时删掉旧文件并继续构建，站点仍有条目池可用。
+        print(f"LLM 分类失败：{type(exc).__name__}: {exc}；本轮不生成日报。", file=sys.stderr)
+        PUBLIC_OUT.unlink(missing_ok=True)
+        return 0
 
     by_section: dict[str, list[dict]] = {key: [] for key, _name in SECTIONS}
     for c in today:
@@ -289,12 +165,11 @@ def main() -> int:
         if not events:
             continue
         summary = None
-        if use_llm:
-            try:
-                summary = summarize_llm(name, [c["members"][0]["title"] for c in events], settings)
-            except Exception as exc:
-                # 概述是增强不是核心，失败只留空，不阻断整份日报
-                print(f"  概述「{name}」失败：{type(exc).__name__}", file=sys.stderr)
+        try:
+            summary = summarize_llm(name, [c["members"][0]["title"] for c in events], settings)
+        except Exception as exc:
+            # 概述是增强不是核心，失败只留空，不阻断整份日报
+            print(f"  概述「{name}」失败：{type(exc).__name__}", file=sys.stderr)
         sections.append(
             {
                 "key": key,
@@ -324,7 +199,7 @@ def main() -> int:
             "sources_total": len(sources),
         },
         "sections": sections,
-        "gaps": gaps(sources, items, now),
+        "gaps": source_health.summarize(sources, items, now, raw["window_days"])["alerts"],
     }
 
     DAILY_DIR.mkdir(parents=True, exist_ok=True)

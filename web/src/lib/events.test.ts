@@ -12,9 +12,7 @@ function makeItem(over: Partial<Item> = {}): Item {
     url: "https://a.com/1",
     published: "2026-10-28T00:00:00+00:00",
     summary: "",
-    cluster_id: "c1",
     event_id: "e1",
-    event_size: 1,
     is_primary: true,
     weight: 0.5,
     ...over,
@@ -24,15 +22,14 @@ function makeItem(over: Partial<Item> = {}): Item {
 describe("groupItems", () => {
   it("groups items sharing an event_id", () => {
     const items = [
-      makeItem({ id: "a", event_id: "e1", event_size: 2, is_primary: true, tier: "official" }),
+      makeItem({ id: "a", event_id: "e1", is_primary: true, tier: "official" }),
       makeItem({
         id: "b",
         event_id: "e1",
-        event_size: 2,
         is_primary: false,
         url: "https://a.com/2",
       }),
-      makeItem({ id: "c", event_id: "e2", event_size: 1, url: "https://a.com/3" }),
+      makeItem({ id: "c", event_id: "e2", url: "https://a.com/3" }),
     ];
     const groups = groupItems(items, new Set());
     expect(groups).toHaveLength(2);
@@ -47,14 +44,12 @@ describe("groupItems", () => {
       makeItem({
         id: "a",
         event_id: "e1",
-        event_size: 2,
         is_primary: false,
         url: "https://a.com/2",
       }),
       makeItem({
         id: "b",
         event_id: "e1",
-        event_size: 2,
         is_primary: true,
         url: "https://a.com/3",
       }),
@@ -65,11 +60,10 @@ describe("groupItems", () => {
 
   it("flags official presence as trusted", () => {
     const withOfficial = [
-      makeItem({ id: "a", event_id: "e1", event_size: 2, tier: "aggregator" }),
+      makeItem({ id: "a", event_id: "e1", tier: "aggregator" }),
       makeItem({
         id: "b",
         event_id: "e1",
-        event_size: 2,
         tier: "official",
         url: "https://a.com/2",
       }),
@@ -77,11 +71,10 @@ describe("groupItems", () => {
     expect(groupItems(withOfficial, new Set())[0].hasOfficial).toBe(true);
 
     const noOfficial = [
-      makeItem({ id: "a", event_id: "e1", event_size: 2, tier: "media" }),
+      makeItem({ id: "a", event_id: "e1", tier: "media" }),
       makeItem({
         id: "b",
         event_id: "e1",
-        event_size: 2,
         tier: "aggregator",
         url: "https://a.com/2",
       }),
@@ -91,11 +84,10 @@ describe("groupItems", () => {
 
   it("splits a flagged event into singletons", () => {
     const items = [
-      makeItem({ id: "a", event_id: "e1", event_size: 2, is_primary: true }),
+      makeItem({ id: "a", event_id: "e1", is_primary: true }),
       makeItem({
         id: "b",
         event_id: "e1",
-        event_size: 2,
         is_primary: false,
         url: "https://a.com/2",
       }),
@@ -110,13 +102,11 @@ describe("groupItems", () => {
       makeItem({
         id: "a",
         event_id: "older",
-        event_size: 1,
         published: "2026-10-26T00:00:00+00:00",
       }),
       makeItem({
         id: "b",
         event_id: "newer",
-        event_size: 1,
         published: "2026-10-28T00:00:00+00:00",
         url: "https://a.com/2",
       }),
@@ -127,11 +117,10 @@ describe("groupItems", () => {
 
   it("keeps the newest date across members", () => {
     const items = [
-      makeItem({ id: "a", event_id: "e1", event_size: 2, published: "2026-10-26T00:00:00+00:00" }),
+      makeItem({ id: "a", event_id: "e1", published: "2026-10-26T00:00:00+00:00" }),
       makeItem({
         id: "b",
         event_id: "e1",
-        event_size: 2,
         published: "2026-10-28T00:00:00+00:00",
         url: "https://a.com/2",
       }),
@@ -144,15 +133,14 @@ describe("tierBreakdown", () => {
   it("lists only present tiers in order", () => {
     const group = groupItems(
       [
-        makeItem({ id: "a", event_id: "e1", event_size: 3, tier: "official" }),
+        makeItem({ id: "a", event_id: "e1", tier: "official" }),
         makeItem({
           id: "b",
           event_id: "e1",
-          event_size: 3,
           tier: "official",
           url: "https://a.com/2",
         }),
-        makeItem({ id: "c", event_id: "e1", event_size: 3, tier: "media", url: "https://a.com/3" }),
+        makeItem({ id: "c", event_id: "e1", tier: "media", url: "https://a.com/3" }),
       ],
       new Set(),
     )[0];
@@ -161,7 +149,7 @@ describe("tierBreakdown", () => {
 
   it("omits empty tiers", () => {
     const group = groupItems(
-      [makeItem({ id: "a", event_id: "e1", event_size: 1, tier: "aggregator" })],
+      [makeItem({ id: "a", event_id: "e1", tier: "aggregator" })],
       new Set(),
     )[0];
     expect(tierBreakdown(group)).toBe("聚合 1");

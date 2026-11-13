@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { fmtDate } from "../lib/format";
-import type { HealthSummary } from "../lib/health";
+import type { HealthSummary } from "../lib/types";
 
 interface Props {
   health: HealthSummary | null;
