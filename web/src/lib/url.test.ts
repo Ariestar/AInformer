@@ -21,6 +21,11 @@ describe("readUrlState", () => {
     expect(s.page).toBe(3);
   });
 
+  it("parses the daily view", () => {
+    expect(readUrlState("?mode=daily").mode).toBe("daily");
+    expect(readUrlState("?mode=bogus").mode).toBe("pool");
+  });
+
   it("falls back on invalid sort and page", () => {
     const s = readUrlState("?sort=bogus&page=-2");
     expect(s.filter.sort).toBe("time");

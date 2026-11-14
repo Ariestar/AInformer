@@ -14,8 +14,9 @@ export function readUrlState(search: string): UrlState {
   const p = new URLSearchParams(search);
   const sort = p.get("sort") ?? "";
   const page = Number.parseInt(p.get("page") ?? "1", 10);
+  const mode = p.get("mode");
   return {
-    mode: p.get("mode") === "brief" ? "brief" : "pool",
+    mode: mode === "brief" || mode === "daily" ? mode : "pool",
     page: Number.isFinite(page) && page > 0 ? page : 1,
     filter: {
       ...initialFilter,
@@ -35,7 +36,7 @@ function serialize(state: UrlState): string {
   if (state.filter.sort !== "time") p.set("sort", state.filter.sort);
   if (state.filter.official) p.set("official", "1");
   if (state.filter.dated) p.set("dated", "1");
-  if (state.mode === "brief") p.set("mode", "brief");
+  if (state.mode !== "pool") p.set("mode", state.mode);
   if (state.page > 1) p.set("page", String(state.page));
   return p.toString();
 }

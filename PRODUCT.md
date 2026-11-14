@@ -25,7 +25,7 @@ GitHub Actions 每 4 小时抓取并部署一次；桌面浏览器为主，手�
 ## Capabilities and Constraints
 
 筛选（关键词 / 来源 / 层级 / 有无日期）、排序、勾选、导出 Markdown、简报视图、深浅色、分页、筛选状态写入 URL。
-约束：纯静态站（Astro 5 + React islands），无后端；数据契约唯一来源 `schema/pool.schema.json`；Python 侧零运行时依赖。
+约束：纯静态站（Astro 5 + React islands），无后端；数据契约唯一来源 `schema/pool.schema.json`；Python 侧运行时只依赖 `openai` SDK 与 `python-dotenv`。
 
 ## Brand Commitments
 

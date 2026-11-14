@@ -14,11 +14,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fetch import fetch_bytes, load_config, parse_feed
+from source_health import STALE_DAYS
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 LOG = DATA / "health_log.jsonl"
-STALE_DAYS = 30
 ZERO_STREAK_ALERT = 3
 
 

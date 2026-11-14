@@ -1,10 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { groupItems } from "../lib/events";
 import { fmtDate, tierName } from "../lib/format";
 import { type FilterState, filterItems, initialFilter, sourceOptions } from "../lib/select";
-import type { Item, Stats, ViewMode } from "../lib/types";
+import type {
+  DailyPayload,
+  HealthSummary,
+  Item,
+  PoolPayload,
+  PoolView,
+  Stats,
+  ViewMode,
+} from "../lib/types";
 import { onlyQueryChanged, readUrlState, type UrlState, writeUrlState } from "../lib/url";
 import { useDebouncedValue } from "../lib/useDebounced";
 import BriefView from "./BriefView";
+import DailyView from "./DailyView";
+import EventList from "./EventList";
+import HealthPanel from "./HealthPanel";
 import ItemList from "./ItemList";
 import Pagination from "./Pagination";
 import StatsStrip from "./StatsStrip";
@@ -13,7 +25,10 @@ import TopBar from "./TopBar";
 
 // 勾选以条目的稳定 id 为键。
 const SEL_KEY = "ainformer.selection.v1";
+// 「这不是同一件事」的反馈，按 event_id 记，只在前端本地生效。
+const SPLIT_KEY = "ainformer.split.v1";
 const DATA_URL = "/data/items.json";
+const DAILY_URL = "/data/daily.json";
 const PAGE_SIZE = 50;
 
 interface Props {
@@ -30,6 +45,14 @@ function loadSelection(): Set<string> {
   }
 }
 
+function loadSplit(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(SPLIT_KEY) || "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
 export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [loaded, setLoaded] = useState(false);
@@ -38,15 +61,21 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   // 输入框立即回显；过滤等 200ms 再用新值，避免每次按键全量重算。
   const [query, setQuery] = useState(filter.q);
   const [mode, setMode] = useState<ViewMode>("pool");
+  const [view, setView] = useState<PoolView>("events");
+  const [daily, setDaily] = useState<DailyPayload | null>(null);
+  const [dailyError, setDailyError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [cur, setCur] = useState(0);
   // 服务端渲染时读不到 localStorage，首屏必须是空集合，否则客户端首次渲染
   // 与 SSR 输出不一致，React 会判定 hydration mismatch 并整树重渲染。
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [split, setSplit] = useState<Set<string>>(() => new Set());
   const [restored, setRestored] = useState(false);
+  const [health, setHealth] = useState<HealthSummary | null>(null);
 
   useEffect(() => {
     setSelected(loadSelection());
+    setSplit(loadSplit());
     setRestored(true);
   }, []);
 
@@ -62,11 +91,12 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
     fetch(DATA_URL, { signal: ctrl.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<{ items: Item[] }>;
+        return res.json() as Promise<PoolPayload>;
       })
       .then((payload) => {
         if (ctrl.signal.aborted) return;
         setItems(payload.items);
+        setHealth(payload.health);
         setLoaded(true);
         // 旧数据里勾选过、新数据里已不存在的 id 清掉，避免存储无限增长。
         const ids = new Set(payload.items.map((it) => it.id));
@@ -98,15 +128,35 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
     };
   }, [loadData]);
 
+  // 日报单独请求，加载失败时「今日」视图给出明确提示而不是空白。
+  useEffect(() => {
+    let cancelled = false;
+    fetch(DAILY_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<DailyPayload>;
+      })
+      .then((payload) => {
+        if (!cancelled) setDaily(payload);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setDailyError(err instanceof Error ? err.message : String(err));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // 恢复完成前不写回，否则会把刚读到的勾选覆盖成空数组
   useEffect(() => {
     if (!restored) return;
     try {
       localStorage.setItem(SEL_KEY, JSON.stringify([...selected]));
+      localStorage.setItem(SPLIT_KEY, JSON.stringify([...split]));
     } catch {
       // 存储不可用时静默降级为仅本次会话有效
     }
-  }, [selected, restored]);
+  }, [selected, split, restored]);
 
   // URL 承载筛选/视图/页码：进页面读一次，之后变更写回，支持分享与刷新保留。
   const [hydrated, setHydrated] = useState(false);
@@ -160,6 +210,7 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
   const visible = useMemo(() => filterItems(items, filter), [items, filter]);
   const selectedItems = useMemo(() => items.filter((it) => selected.has(it.id)), [items, selected]);
   const sources = useMemo(() => sourceOptions(items), [items]);
+  const groups = useMemo(() => groupItems(visible, split), [visible, split]);
 
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const paged = useMemo(
@@ -189,6 +240,24 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
       else next.add(id);
       return next;
     });
+  }, []);
+
+  // 事件视图里勾选是整个事件（其全部成员）一起勾。
+  const toggleEvent = useCallback((ids: string[]) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      const allOn = ids.every((id) => next.has(id));
+      for (const id of ids) {
+        if (allOn) next.delete(id);
+        else next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  // 用户判定「这不是同一件事」：把该事件拆成单条，只影响本地视图。
+  const feedback = useCallback((eventId: string) => {
+    setSplit((prev) => new Set(prev).add(eventId));
   }, []);
 
   const selectAt = useCallback(
@@ -262,10 +331,43 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
       />
 
       <main className="wrap main" id="main">
-        {mode === "pool" ? (
+        <HealthPanel health={health} />
+        {mode === "daily" ? (
+          daily ? (
+            <DailyView daily={daily} />
+          ) : dailyError ? (
+            <div className="empty">
+              日报暂不可用（{dailyError}）。配置 LLM_API_KEY 后运行一次 bin/daily.py 再刷新。
+            </div>
+          ) : (
+            <div className="hint" role="status">
+              正在加载日报…
+            </div>
+          )
+        ) : mode === "pool" ? (
           <>
             <div className="sr-only" aria-live="polite">
-              共 {visible.length} 条，第 {page} / {pageCount} 页
+              {view === "events"
+                ? `共 ${groups.length} 个事件`
+                : `共 ${visible.length} 条，第 ${page} / ${pageCount} 页`}
+            </div>
+            <div className="seg view-toggle">
+              <button
+                type="button"
+                aria-pressed={view === "events"}
+                className={view === "events" ? "on" : undefined}
+                onClick={() => setView("events")}
+              >
+                按事件 <span className="cnt">{groups.length}</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={view === "items"}
+                className={view === "items" ? "on" : undefined}
+                onClick={() => setView("items")}
+              >
+                按条 <span className="cnt">{visible.length}</span>
+              </button>
             </div>
             <Toolbar
               filter={filter}
@@ -274,15 +376,16 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
               selectedCount={selected.size}
               onChange={changeFilter}
               onQueryChange={setQuery}
-              onSelectVisible={() =>
+              onSelectVisible={() => {
+                const target = view === "events" ? visible : paged;
                 setSelected((prev) => {
                   const next = new Set(prev);
-                  paged.forEach((it) => {
+                  target.forEach((it) => {
                     next.add(it.id);
                   });
                   return next;
-                })
-              }
+                });
+              }}
               onClear={() => setSelected(new Set())}
               onExport={exportMarkdown}
             />
@@ -291,19 +394,28 @@ export default function PoolApp({ stats, windowDays, initialItems }: Props) {
                 正在加载完整列表…
               </div>
             ) : null}
-            <ItemList
-              items={paged}
-              selected={selected}
-              onToggle={toggle}
-              footer={
-                <Pagination
-                  page={page}
-                  pageCount={pageCount}
-                  total={visible.length}
-                  onChange={setPage}
-                />
-              }
-            />
+            {view === "events" ? (
+              <EventList
+                groups={groups}
+                selected={selected}
+                onToggle={toggleEvent}
+                onFeedback={feedback}
+              />
+            ) : (
+              <ItemList
+                items={paged}
+                selected={selected}
+                onToggle={toggle}
+                footer={
+                  <Pagination
+                    page={page}
+                    pageCount={pageCount}
+                    total={visible.length}
+                    onChange={setPage}
+                  />
+                }
+              />
+            )}
             {loadError ? (
               <div className="empty">
                 完整列表加载失败（{loadError}），当前仅显示构建期保留的 {initialItems.length} 条。

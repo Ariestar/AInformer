@@ -33,6 +33,9 @@ jobs:
       AINFORMER_FEED_LIMIT: ${{ secrets.AINFORMER_FEED_LIMIT }}
       AINFORMER_FEED_PER_SOURCE: ${{ secrets.AINFORMER_FEED_PER_SOURCE }}
       AINFORMER_USER_AGENT: ${{ secrets.AINFORMER_USER_AGENT }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      LLM_MODEL: ${{ secrets.LLM_MODEL }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,6 +51,25 @@ jobs:
 
       - name: fetch sources
         run: uv run python bin/fetch.py
+
+      - name: event merge (recall → judge → merge)
+        run: |
+          if [ -n "$LLM_API_KEY" ]; then
+            uv run python bin/cluster.py prepare
+            uv run python bin/cluster.py judge
+            uv run python bin/cluster.py merge
+          else
+            echo "LLM_API_KEY 未配置，跳过事件归并（条目按独立事件导出）"
+          fi
+
+      - name: daily report
+        run: |
+          if [ -f data/clusters.json ]; then
+            uv run python bin/daily.py
+          else
+            echo "无 clusters.json，跳过日报"
+          fi
+
       - name: export contract
         run: uv run python bin/export.py
 

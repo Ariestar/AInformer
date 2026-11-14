@@ -10,6 +10,8 @@ AI 行业情报系统：多源抓取 → 事实标注 → 单页站点 + RSS。
 |---|---|---|
 | 抓取 + 归一 + 去重 | `bin/fetch.py` | `data/items.json` |
 | 事实标注（可选） | `bin/triage.py` | `data/triage.json` |
+| 事件归并（可选） | `bin/cluster.py` | `data/clusters.json` |
+| 当日日报（可选） | `bin/daily.py` | `data/daily/`、`web/public/data/daily.json` |
 | 源健康检查 | `bin/health.py` | `data/health.json`、`health_log.jsonl` |
 | 导出前端契约 | `bin/export.py` | `web/public/data/items.json` |
 | 渲染条目池 | `web/`（Astro + React 岛屿） | `out/index.html` |
@@ -43,17 +45,18 @@ cd web && bun run dev
 `out/` 是一个完整的静态站点，**要通过 HTTP 访问**（`cd web && bun run preview`，
 或部署后访问）：条目数据放在 `/data/items.json`，由浏览器单独请求，直接双击
 `out/index.html` 会因浏览器对 `file://` 的限制读不到数据。页面提供搜索、按源筛选、
-只看官方源、只看有日期、勾选导出 Markdown，以及深浅色切换。
+只看官方源、只看有日期、勾选导出 Markdown、按事件/按条两种视图、源健康提示、
+「今日」日报，以及深浅色切换。
 
 ## 信息源
 
-源清单写在 `sources.toml`，17 个源分三级：
+源清单写在 `sources.toml`，29 个源分三级：
 
 | tier | 含义 | 数量 |
 |---|---|---|
-| `official` | 一手事实，官网/官方博客 | 6 |
-| `media` | 只做交叉验证，不能作为唯一事实来源 | 9 |
-| `aggregator` | 只当线索，必须回到一手源确认 | 2 |
+| `official` | 一手事实，官网/官方博客 | 11 |
+| `media` | 只做交叉验证，不能作为唯一事实来源 | 15 |
+| `aggregator` | 只当线索，必须回到一手源确认 | 3 |
 
 只收有 RSS/Atom 的源，不做 HTML 抓取兼容。改源只改这一个文件。
 
@@ -63,6 +66,21 @@ cd web && bun run dev
 |---|---|---|
 | `AINFORMER_BASE_URL` | 是 | 站点根地址。feed 的 `atom:link self` 依赖它，**没有默认值**，缺了直接退出码 2 |
 | `TYPESAFE_API_KEY` | 否 | 只有跑 `bin/triage.py` 时需要 |
+| `LLM_API_KEY` | 否 | 事件归并与日报的 key；缺失时跳过归并与日报，站点照常构建 |
+| `LLM_BASE_URL` | 否 | 默认 `https://api.deepseek.com`，换 OpenAI / OpenRouter 时覆盖 |
+| `LLM_MODEL` | 否 | 默认 `deepseek-chat` |
+
+归并与日报统一走 OpenAI SDK（`openai` 包），只要服务兼容 `/chat/completions` 就能用，换供应商只改 `LLM_BASE_URL` / `LLM_MODEL`。
+
+本地把值写进 `.env`，再同步到仓库 secrets（公开仓库不要放 variables：variables 是明文，
+Actions 日志也不会自动打码）：
+
+```bash
+gh secret set --env-file .env
+```
+
+`bin/cluster.py judge` 和 `bin/daily.py` 都读同一组 `LLM_*`；没配 key 时流水线会跳过这两步，
+`bin/export.py` 把每条条目当独立事件导出。
 
 ## 开发与检查
 
@@ -91,7 +109,9 @@ Biome 不处理 `.astro` 文件，那部分由 `astro check` 覆盖。
 | `CLOUDFLARE_API_TOKEN` | Pages 部署权限 |
 | `CLOUDFLARE_ACCOUNT_ID` | 账号 ID |
 
-站点地址默认 `https://ainformer.pages.dev`，可用仓库变量 `AINFORMER_BASE_URL` 覆盖。
+站点地址默认 `https://ainformer.pages.dev`，可用仓库 secret `AINFORMER_BASE_URL` 覆盖。
+配置 `LLM_API_KEY` 后，部署流水线会在抓取之后跑事件归并与日报；没有配置则跳过这两步，
+站点仍按独立条目构建。
 
 ## 部署
 
@@ -112,7 +132,7 @@ Cloudflare 的 CORS 与缓存头在 `web/public/_headers`，随前端构建进�
 ## 目录
 
 ```
-bin/           六个脚本，每个只干一件事
+bin/           脚本，每个只干一件事
 web/           站点源码：Astro 页面 + React 岛屿 + 一份样式表
 schema/        前端数据契约，items.json 的唯一真相
 sources.toml   源清单（唯一需要日常改的文件）

@@ -7,7 +7,7 @@ Keep this file limited to durable, cross-session guidance. Current progress, tem
 ## Project
 
 - Purpose: AI 行业情报系统 —— 多源抓取 → 事实标注 → 静态站点 + RSS。核心约束是「机器不替人筛」：抓回来的条目原样呈现，取舍由人决定。
-- Stack: Python 3.11+（抓取、判断、feed，零运行时依赖）；Astro 5 + React 19 + TypeScript（站点，静态输出）；Cloudflare Pages（部署）。
+- Stack: Python 3.11+（抓取、判断、feed；运行时依赖 `openai` SDK 与 `python-dotenv`）；Astro 5 + React 19 + TypeScript（站点，静态输出）；Cloudflare Pages（部署）。
 - Package manager: `uv`（Python）/ `bun`（前端）。
 
 ## Commands
@@ -51,7 +51,7 @@ Keep this file limited to durable, cross-session guidance. Current progress, tem
 - Use CodeGraph for structural code questions: symbol definitions and signatures, callers and callees, execution flow, and change impact.
 - Use `rg` for literal text, comments, log messages, and filenames.
 - The terminal provides the Unix command set via **uutils-coreutils** (installed through Scoop `main` bucket at `D:\Workspace\Apps\Scoop\apps\uutils-coreutils\current\`). Use Unix commands when they are the best fit for the task. Note: in PowerShell, `ls`, `cat`, `cp`, `mv`, `rm` etc. are shadowed by aliases to native cmdlets (`Get-ChildItem`, `Get-Content`, ...) — invoke the Unix binaries by full path, or use the PowerShell cmdlets directly.
-- Prefer integrated CodeGraph MCP tools. If `.codegraph/` is missing, ask before running `codegraph init -i`.
+- Prefer integrated CodeGraph MCP tools. If `.codegraph/` is missing, run `codegraph init -i` yourself; if it is stale, run the project's sync/refresh command. Never skip CodeGraph just because it is not initialized or synced.
 - Use Sivtr before asking the user to repeat terminal output, prior decisions, validation evidence, debugging history, or earlier agent context.
 - Search Sivtr narrowly and expand only the relevant records. Treat retrieved memory as evidence, then verify current files or commands before making claims about current state.
 - Use `gh` for all GitHub API and pull-request access (`gh api`, `gh pr`, `gh issue`, ...). `gh` authenticates automatically from the `GH_TOKEN`/`GITHUB_TOKEN` user environment variable; never pass tokens on the command line.

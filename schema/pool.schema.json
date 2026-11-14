@@ -4,12 +4,13 @@
   "title": "AInformer item pool export",
   "description": "前端消费的条目池契约。抓取层与 UI 之间的唯一边界，字段变更必须同时改这里和 web/src/lib/types.ts。",
   "type": "object",
-  "required": ["generated_at", "window_days", "stats", "items"],
+  "required": ["generated_at", "window_days", "stats", "health", "items"],
   "additionalProperties": false,
   "properties": {
     "generated_at": { "type": "string", "format": "date-time" },
     "window_days": { "type": "integer", "minimum": 1 },
     "stats": { "$ref": "#/$defs/stats" },
+    "health": { "$ref": "#/$defs/health" },
     "items": {
       "type": "array",
       "items": { "$ref": "#/$defs/item" }
@@ -27,6 +28,37 @@
         "after_dedup": { "type": "integer", "minimum": 0 }
       }
     },
+    "health": {
+      "type": "object",
+      "required": ["total", "problemCount", "alerts", "rows"],
+      "additionalProperties": false,
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "problemCount": { "type": "integer", "minimum": 0 },
+        "alerts": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "rows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/healthRow" }
+        }
+      }
+    },
+    "healthRow": {
+      "type": "object",
+      "required": ["id", "name", "state", "kept", "newest", "staleDays", "error"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["ok", "error", "stale", "empty"] },
+        "kept": { "type": "integer", "minimum": 0 },
+        "newest": { "type": ["string", "null"] },
+        "staleDays": { "type": "integer", "minimum": -1 },
+        "error": { "type": ["string", "null"] }
+      }
+    },
     "item": {
       "type": "object",
       "required": [
@@ -38,7 +70,8 @@
         "url",
         "published",
         "summary",
-        "cluster_id",
+        "event_id",
+        "is_primary",
         "weight"
       ],
       "additionalProperties": false,
@@ -55,10 +88,14 @@
         "url": { "type": "string", "minLength": 8 },
         "published": { "type": ["string", "null"] },
         "summary": { "type": "string" },
-        "cluster_id": {
+        "event_id": {
           "type": "string",
-          "minLength": 4,
-          "description": "同一事件（标题指纹相同）共享同一个 cluster_id，前端据此展示旁证"
+          "minLength": 1,
+          "description": "bin/cluster.py 合并出的事件标识，前端据此把条目归成「一件事」"
+        },
+        "is_primary": {
+          "type": "boolean",
+          "description": "是否该事件的主源（官方优先，其次最早）"
         },
         "weight": { "type": "number", "minimum": 0, "maximum": 1 }
       }
